@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🕹️ Bird Game 2 Peck Duel - HARD MODE 🕹️</title>
+    <style>
+        * { touch-action: manipulation; }
+        body { 
+            margin: 0; padding: 0; overflow: hidden; background: #000; 
+            font-family: monospace; height: 100vh; 
+        }
+        canvas { 
+            width: 100vw; height: 100vh; 
+            max-width: 360px; max-height: 640px; 
+            margin: auto; display: block; 
+            background: #001100; 
+            image-rendering: pixelated; 
+            border: 3px solid #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="c" width="360" height="640"></canvas>
+    <script>
+        console.log('🦜 HARD MODE LOADED - Perth Night Grind!');
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        const W = 360, H = 640;
+        let gameState = 'menu'; // menu, playing, win, lose
+        let playerMeter = 0, aiMeter = 0;
+        let playerHP = 50, aiHP = 45; // HARDER: More HP
+        let combo = 0, score = 0, taps = 0, highScore = 0;
+        let peckAnim = 0, flashAnim = 0;
+        let lastTap = 0;
+        let dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+
+        // Load high score
+        if (localStorage.getItem('birdpeck_hs_' + dateStr)) {
+            highScore = parseInt(localStorage.getItem('birdpeck_hs_' + dateStr));
+        }
+
+        function drawPigeon(x, y, lunge) {
+            const s = 1.1;
+            ctx.save(); ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(12*s, 0);
+            ctx.fillStyle = '#888'; ctx.fillRect(-8*s, -6*s, 16*s, 12*s);
+            ctx.fillStyle = '#666'; ctx.fillRect(-3*s, -2*s, 10*s, 6*s);
+            ctx.fillStyle = '#aaa'; ctx.fillRect(5*s, -6*s, 7*s, 7*s);
+            ctx.fillStyle = '#ffaa00'; ctx.fillRect(11*s, -2*s, 7*s, 3*s);
+            ctx.fillStyle = '#fff'; ctx.fillRect(7*s, -4*s, 2*s, 2*s);
+            ctx.fillStyle = '#000'; ctx.fillRect(8*s, -3*s, 1*s, 1*s);
+            ctx.restore();
+        }
+
+        function drawHummer(x, y, lunge) {
+            const s = 1.0;
+            ctx.save(); ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(-12*s, 0);
+            ctx.fillStyle = '#00cc88'; ctx.fillRect(-6*s, -5*s, 12*s, 10*s);
+            ctx.fillStyle = '#ff8800'; ctx.fillRect(-16*s, -2*s, 10*s, 4*s);
+            ctx.fillStyle = '#fff'; ctx.fillRect(-1*s, -3*s, 2*s, 2*s);
+            ctx.fillStyle = '#000'; ctx.fillRect(-0.5*s, -2*s, 1*s, 1*s);
+            ctx.fillStyle = '#009955'; ctx.fillRect(0*s, 0*s, 8*s, 5*s);
+            ctx.fillStyle = '#008844'; ctx.fillRect(2*s, 1*s, 5*s, 3*s);
+            ctx.fillStyle = '#006633'; ctx.fillRect(6*s, 2*s, 3*s, 3*s);
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, W, H);
+
+            if (gameState === 'menu') {
+                ctx.fillStyle = '#002200';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ffff00';
+                ctx.font = 'bold 32px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('🕹️ BIRD GAME 2 🕹️', W/2, 120);
+                ctx.font = 'bold 36px monospace';
+                ctx.fillStyle = '#ffaa00';
+                ctx.fillText('PECK DUEL', W/2, 190);
+                ctx.font = 'bold 28px monospace';
+                ctx.fillStyle = '#ffff00';
+                ctx.fillText('HARD MODE', W/2, 240);
+                ctx.font = '24px monospace';
+                ctx.fillStyle = '#00ff88';
+                ctx.fillText('TAP TO START', W/2, 300);
+                ctx.fillText('SPAM FASTER', W/2, 340);
+                ctx.fillStyle = '#ff4444';
+                ctx.fillText('NERF HUMMER', W/2, 400);
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '20px monospace';
+                ctx.fillText(`BEST: ${highScore} | ${dateStr}`, W/2, 460);
+                ctx.textAlign = 'left';
+                return;
+            }
+
+            if (gameState === 'win') {
+                // WIN PAGE - FULL MEME
+                ctx.fillStyle = '#004400';
+                ctx.fillRect(0, 0, W, H);
+                // Confetti effect
+                for (let i=0; i<50; i++) {
+                    ctx.fillStyle = `hsl(${i*7}, 100%, 60%)`;
+                    ctx.fillRect(Math.sin(frame*0.1 + i)*50 + W/2, i*8, 4, 4);
+                }
+                ctx.fillStyle = '#00ff44';
+                ctx.font = 'bold 44px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('PIGEON WINS!', W/2, 160);
+                ctx.font = 'bold 32px monospace';
+                ctx.fillStyle = '#ffff00';
+                ctx.fillText(`SCORE: ${score}`, W/2, 230);
+                ctx.fillStyle = '#ffaa00';
+                ctx.font = 'bold 28px monospace';
+                ctx.fillText(`NEW BEST: ${highScore}`, W/2, 280);
+                ctx.font = 'bold 24px monospace';
+                ctx.fillStyle = '#00ff88';
+                ctx.fillText('HUMMER NERFED!', W/2, 340);
+                ctx.fillStyle = '#ff4444';
+                ctx.fillText('PIGEON META', W/2, 390);
+                ctx.font = 'bold 22px monospace';
+                ctx.fillStyle = '#ffff00';
+                ctx.fillText('TAP TO PLAY AGAIN', W/2, 460);
+                ctx.textAlign = 'left';
+                // Save HS
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('birdpeck_hs_' + dateStr, highScore);
+                }
+                return;
+            }
+
+            if (gameState === 'lose') {
+                ctx.fillStyle = '#220000';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ff4444';
+                ctx.font = 'bold 44px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('HUMMER WINS!', W/2, 200);
+                ctx.font = 'bold 28px monospace';
+                ctx.fillStyle = '#ffff00';
+                ctx.fillText(`SCORE: ${score}`, W/2, 280);
+                ctx.font = '24px monospace';
+                ctx.fillStyle = '#ffaa00';
+                ctx.fillText('GIT GUD', W/2, 340);
+                ctx.fillStyle = '#00ff00';
+                ctx.fillText('TAP RETRY', W/2, 410);
+                ctx.textAlign = 'left';
+                return;
+            }
+
+            // PLAYING
+            const grad = ctx.createLinearGradient(0,0,0,H);
+            grad.addColorStop(0,'#002200'); grad.addColorStop(1,'#000000');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0,W,H);
+
+            // Scanlines
+            ctx.strokeStyle = 'rgba(0,20,0,0.3)'; ctx.lineWidth=1;
+            for(let i=1; i<110; i++) {
+                ctx.beginPath(); ctx.moveTo(0,i*5.8); ctx.lineTo(W,i*5.8); ctx.stroke();
+            }
+
+            // HP BARS
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(10,25,170,45); ctx.fillRect(W-180,25,170,45);
+            ctx.fillStyle = '#00ff44'; ctx.fillRect(15,30,(playerHP/50)*160,35);
+            ctx.fillStyle = '#ff8844'; ctx.fillRect(W-175,30,(aiHP/45)*160,35);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px monospace'; ctx.textAlign='left';
+            ctx.fillText(`PIGEON ${Math.ceil(playerHP)}/50`,20,55);
+            ctx.fillText(`HUMMER ${Math.ceil(aiHP)}/45`,W-165,55);
+
+            // BIRDS
+            drawPigeon(85 + peckAnim*2.5, 310, peckAnim>0 ? 25:0);
+            drawHummer(W-85 + peckAnim*-2.5, 310, peckAnim<0 ? 25:0);
+
+            // METER
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(10,H-100,W-20,60);
+            ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-85,(playerMeter/10)*(W-40),30);
+            ctx.fillStyle = '#ff8844'; ctx.fillRect(20,H-85,(aiMeter/10)*(W-40),30);
+            ctx.fillStyle = '#ffff00'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
+            ctx.fillText('PECK METER',W/2, H-55);
+
+            // STATS
+            ctx.textAlign='left'; ctx.fillStyle='#00ff88'; ctx.font='bold 20px monospace';
+            ctx.fillText(`TAPS:${taps} COMBO:${combo} SCORE:${score}`,15,H-25);
+
+            // FLASHES
+            if(flashAnim>0){ ctx.fillStyle=`rgba(0,255,0,${flashAnim})`; ctx.fillRect(0,0,W,H); }
+            if(peckAnim>0){ ctx.fillStyle='rgba(0,255,100,0.25)'; ctx.fillRect(0,0,W,H); }
+            if(peckAnim<0){ ctx.fillStyle='rgba(255,100,0,0.3)'; ctx.fillRect(0,0,W,H); }
+        }
+
+        function update() {
+            if(gameState !== 'playing') return;
+            frame++;
+
+            // AI HARDER: Faster peck
+            aiMeter += 0.11; // UP from 0.07
+            if(aiMeter >=10){
+                aiMeter=0;
+                playerHP -= 2; // More dmg
+                peckAnim = -35;
+                combo=0;
+                flashAnim=0.6;
+                score = Math.max(0,score-5);
+                console.log('🤬 HUMMER PECK! Pigeon:',playerHP);
+            }
+
+            if(aiHP <=0){ gameState='win'; console.log('🏆 PIGEON WINS! Score:',score); return; }
+            if(playerHP <=0){ gameState='lose'; console.log('💀 LOSE. Score:',score); return; }
+
+            peckAnim *=0.91; flashAnim*=0.88;
+            if(Math.abs(peckAnim)<1) peckAnim=0;
+        }
+
+        function startGame(){
+            gameState='playing';
+            playerMeter=aiMeter=0;
+            playerHP=50; aiHP=45;
+            combo=taps=0; peckAnim=0; score=0;
+            console.log('🔥 HARD DUEL START');
+        }
+
+        function handleTap(e){
+            e.preventDefault();
+            taps++;
+            console.log('TAP',taps);
+
+            if(gameState==='menu') return startGame();
+            if(gameState==='win' || gameState==='lose'){ gameState='menu'; return; }
+
+            // PLAYER: Slightly nerfed charge
+            const now = Date.now();
+            if(now - lastTap <200) combo = Math.min(combo+1,25);
+            else combo=1;
+            lastTap=now;
+            playerMeter +=1.4 + (combo*0.12); // DOWN from 1.8
+            flashAnim=0.8;
+
+            if(playerMeter >=10){
+                playerMeter -=10;
+                aiHP -=1.2 + (combo/4); // Balanced dmg
+                peckAnim=35;
+                score +=25 + combo*4;
+                console.log('🦤 PECK! Hummer:',aiHP);
+            }
+        }
+
+        // EVENTS
+        ['touchstart','click','pointerdown','mousedown'].forEach(ev=>
+            canvas.addEventListener(ev,handleTap,{passive:false})
+        );
+
+        let frame=0;
+        function loop(){
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        draw(); loop();
+        console.log('✅ HARD MODE READY - GREEN SCREEN!');
+    </script>
+</body>
+</html>
