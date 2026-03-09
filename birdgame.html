@@ -8,7 +8,8 @@
         * { touch-action: manipulation; }
         body { 
             margin: 0; padding: 0; overflow: hidden; background: #000; 
-            font-family: monospace; height: 100vh; 
+            font-family: monospace; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
         }
         canvas { 
             width: 100vw; height: 100vh; 
@@ -34,6 +35,7 @@
         let combo = 0, score = 0, taps = 0, highScore = 0;
         let peckAnim = 0, flashAnim = 0;
         let lastTap = 0;
+        let frame = 0;
         let dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
 
         // Load high score
@@ -179,11 +181,11 @@
             drawHummer(W-85 + peckAnim*-2.5, 310, peckAnim<0 ? 25:0);
 
             // METER
-            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(10,H-100,W-20,60);
-            ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-85,(playerMeter/10)*(W-40),30);
-            ctx.fillStyle = '#ff8844'; ctx.fillRect(20,H-85,(aiMeter/10)*(W-40),30);
-            ctx.fillStyle = '#ffff00'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
-            ctx.fillText('PECK METER',W/2, H-55);
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(10,H-105,W-20,70);
+            ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-98,(playerMeter/10)*(W-40),18);
+            ctx.fillStyle = '#ff8844'; ctx.fillRect(20,H-76,(aiMeter/10)*(W-40),18);
+            ctx.fillStyle = '#ffff00'; ctx.font='bold 24px monospace'; ctx.textAlign='center';
+            ctx.fillText('PECK METER',W/2, H-50);
 
             // STATS
             ctx.textAlign='left'; ctx.fillStyle='#00ff88'; ctx.font='bold 20px monospace';
@@ -197,7 +199,6 @@
 
         function update() {
             if(gameState !== 'playing') return;
-            frame++;
 
             // AI HARDER: Faster peck
             aiMeter += 0.11; // UP from 0.07
@@ -256,14 +257,14 @@
             canvas.addEventListener(ev,handleTap,{passive:false})
         );
 
-        let frame=0;
         function loop(){
+            frame++;
             update();
             draw();
             requestAnimationFrame(loop);
         }
 
-        draw(); loop();
+        loop();
         console.log('✅ HARD MODE READY - GREEN SCREEN!');
     </script>
 </body>
