@@ -693,18 +693,10 @@
                 ctx.stroke();
             }
 
-            ctx.strokeStyle = 'rgba(0,255,120,0.08)';
-            ctx.lineWidth = 1;
-            for (let y = 0; y < H; y += 7) {
-                ctx.beginPath();
-                ctx.moveTo(0, y + (frame % 7));
-                ctx.lineTo(W, y + (frame % 7));
-                ctx.stroke();
-            }
-
-            for (let i = 0; i < 24; i++) {
-                ctx.fillStyle = `hsla(${(frame * 2 + i * 15) % 360},100%,60%,0.25)`;
-                ctx.fillRect((i * 17 + frame * 2) % (W + 20) - 10, (i * 29) % H, 3, 3);
+            for (let i = 0; i < 32; i++) {
+                const colors = ['#ff006e', '#00d4ff', '#ffbe0b', '#fb5607', '#8338ec'];
+                ctx.fillStyle = `${colors[i % colors.length]}88`;
+                ctx.fillRect((i * 12 + frame * 5) % (W + 20) - 10, (i * 23 + frame * 3) % H, 4, 4);
             }
 
             ctx.fillStyle = '#ffff00';
@@ -928,14 +920,33 @@
             if (gameState === 'gauntletwin') { drawGauntletWin(); ctx.restore(); return; }
 
             const b = currentBird();
-            const grad = ctx.createLinearGradient(0,0,0,H);
-            grad.addColorStop(0,'#002200'); grad.addColorStop(1,'#000000');
-            ctx.fillStyle = grad;
+            ctx.fillStyle = '#000000';
             ctx.fillRect(0,0,W,H);
 
-            ctx.strokeStyle = 'rgba(0,20,0,0.2)'; ctx.lineWidth=1;
-            for(let i=1; i<110; i++) {
-                ctx.beginPath(); ctx.moveTo(0,i*5.8); ctx.lineTo(W,i*5.8); ctx.stroke();
+            const comboPulse = Math.min(combo, 30) / 30;
+            for (let i = 0; i < 42; i++) {
+                const sx = (i * 53 + frame * (0.3 + comboPulse * 0.5)) % (W + 20) - 10;
+                const sy = (i * 37 + frame * 0.12) % (H - 150) + 82;
+                const twinkle = 0.2 + Math.abs(Math.sin(frame * 0.05 + i)) * 0.55;
+                const colors = ['#ff006e', '#00d4ff', '#ffbe0b', '#fb5607', '#8338ec'];
+                ctx.fillStyle = `${colors[i % colors.length]}${Math.round(twinkle * (0.28 + comboPulse * 0.3) * 255).toString(16).padStart(2, '0')}`;
+                const size = (i % 3 === 0) ? 2 : 1;
+                ctx.fillRect(sx, sy, size, size);
+            }
+
+            const vortices = [
+                { cx: 84, cy: 320, hue: 150, dir: 1 },
+                { cx: W - 84, cy: 320, hue: 18, dir: -1 }
+            ];
+            for (const v of vortices) {
+                for (let i = 0; i < 26; i++) {
+                    const angle = frame * 0.03 * v.dir + i * 0.6;
+                    const radius = 12 + i * (1.2 + comboPulse * 0.45);
+                    const x = v.cx + Math.cos(angle) * radius;
+                    const y = v.cy + Math.sin(angle) * radius * 0.65;
+                    ctx.fillStyle = `hsla(${v.hue + i * 2},100%,58%,${0.05 + i * 0.006})`;
+                    ctx.fillRect(x, y, 2, 2);
+                }
             }
 
             ctx.fillStyle = '#ffff00'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
@@ -1010,9 +1021,22 @@
 
             drawNerfAlert();
 
-            if(flashAnim>0){ ctx.fillStyle=`rgba(0,255,0,${flashAnim*0.4})`; ctx.fillRect(0,0,W,H); }
-            if(peckAnim>0){ ctx.fillStyle='rgba(0,255,100,0.15)'; ctx.fillRect(0,0,W,H); }
-            if(peckAnim<0){ ctx.fillStyle='rgba(255,100,0,0.2)'; ctx.fillRect(0,0,W,H); }
+            if (peckAnim > 0) {
+                const pulse = 50 + Math.abs(peckAnim) * 0.8;
+                const pGrad = ctx.createRadialGradient(85, 320, 12, 85, 320, pulse);
+                pGrad.addColorStop(0, 'rgba(0,255,120,0.28)');
+                pGrad.addColorStop(1, 'rgba(0,255,120,0)');
+                ctx.fillStyle = pGrad;
+                ctx.fillRect(0, 0, W, H);
+            }
+            if (peckAnim < 0) {
+                const pulse = 50 + Math.abs(peckAnim) * 0.8;
+                const aGrad = ctx.createRadialGradient(W - 85, 320, 12, W - 85, 320, pulse);
+                aGrad.addColorStop(0, 'rgba(255,110,0,0.30)');
+                aGrad.addColorStop(1, 'rgba(255,110,0,0)');
+                ctx.fillStyle = aGrad;
+                ctx.fillRect(0, 0, W, H);
+            }
 
             if (currentLevel >= 7 && hudGlitch > 0) {
                 ctx.fillStyle = `rgba(255,0,255,${hudGlitch*0.3})`;
@@ -1050,7 +1074,6 @@
                 playPeckSound(false);
                 peckAnim = -35;
                 combo = Math.max(0, combo - 2);
-                flashAnim = 0.8;
                 score = Math.max(0, score - 3);
                 shakeX = (Math.random()-0.5)*8;
                 shakeY = (Math.random()-0.5)*8;
@@ -1180,7 +1203,6 @@
             if (now - lastTap < 200) combo = Math.min(combo + 1, 30);
             else combo = 1;
             lastTap = now;
-            flashAnim = 0.6;
 
             playerMeter += 0.8 + (combo * 0.05);
 
