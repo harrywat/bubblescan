@@ -47,7 +47,7 @@
             { name:'EAGLE',      emoji:'🦅', color:'#ffcc00', accent:'#cc9900', size:1.25, hp:50, speed:0.06, dmg:2.1, 
               taunt:'NO SKILL BIRD', winQuote:'EAGLE CARRIED BY HITBOX', tier:'A-TIER',
               stats:{wingDrag:31.7,beakSharp:'S-',featherDens:55,peckDPS:19.8,diveBomb:'420dmg'} },
-            { name:'HUMMINGBIRD',emoji:'🐦', flipEmoji:true, color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
+            { name:'HUMMINGBIRD',emoji:'🐦', color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
               taunt:'STILL BROKEN', winQuote:'HUMMER NERFED AGAIN!!', tier:'S-TIER (NERFED)',
               stats:{wingDrag:2.1,beakSharp:'SS',featherDens:12,peckDPS:31.4,hitbox:'BUGGED',nectarMeter:'EMPTY',staminaDrain:'SEVERE'} },
             { name:'SHOEBILL',   emoji:'🦤', color:'#556677', accent:'#334455', size:1.4, hp:65, speed:0.05, dmg:2.6, 
@@ -607,7 +607,7 @@
 
             drawFakeHud();
             drawPigeon(85 + peckAnim*2.5, 320, peckAnim>0 ? 25:0);
-            const fightFacingLeft = b.name === 'HUMMINGBIRD' ? false : true;
+            const fightFacingLeft = true;
             drawPixelBird(W-85 + peckAnim*-2.5, 320, b, fightFacingLeft, peckAnim<0 ? 25:0);
 
             if (currentLevel === 5) {
