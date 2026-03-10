@@ -32,7 +32,7 @@
 
         // ===== BIRD ROSTER =====
         const BIRDS = [
-            { name:'SEAGULL',    emoji:'🕊️', color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
+            { name:'SEAGULL',    emoji:'\u{1F54A}\uFE0F', color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
               taunt:'EZ LOBBY', winQuote:'SEAGULL MAINS MAD', tier:'D-TIER', 
               stats:{wingDrag:12.1,beakSharp:'C',featherDens:34,peckDPS:8.7,glideRatio:'0.4:1'} },
             { name:'FLAMINGO',   emoji:'🦩', color:'#ff69b4', accent:'#ff1493', size:1.3, hp:45, speed:0.06, dmg:1.3, 
@@ -41,13 +41,13 @@
             { name:'PENGUIN',    emoji:'🐧', color:'#4488ff', accent:'#2266cc', size:1.1, hp:38, speed:0.07, dmg:1.4, 
               taunt:'SLIDE SPAMMER', winQuote:'PENGUIN SLIDE PATCHED', tier:'C+TIER',
               stats:{wingDrag:5.0,beakSharp:'B',featherDens:88,peckDPS:11.4,slideSpeed:'MACH 2'} },
-            { name:'OWL',        emoji:'🦉', color:'#8B4513', accent:'#654321', size:1.0, hp:40, speed:0.07, dmg:1.6, 
+            { name:'OWL',        emoji:'🦉', flipEmoji:true, color:'#8B4513', accent:'#654321', size:1.0, hp:40, speed:0.07, dmg:1.6, 
               taunt:'STEALTH IS FAIR', winQuote:'OWL INVIS REMOVED', tier:'B-TIER',
               stats:{wingDrag:9.9,beakSharp:'A-',featherDens:62,peckDPS:14.1,stealthCD:'3.2s'} },
             { name:'EAGLE',      emoji:'🦅', color:'#ffcc00', accent:'#cc9900', size:1.25, hp:50, speed:0.06, dmg:2.1, 
               taunt:'NO SKILL BIRD', winQuote:'EAGLE CARRIED BY HITBOX', tier:'A-TIER',
               stats:{wingDrag:31.7,beakSharp:'S-',featherDens:55,peckDPS:19.8,diveBomb:'420dmg'} },
-            { name:'HUMMINGBIRD',emoji:'🐦', color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
+            { name:'HUMMINGBIRD',emoji:'🐦', flipEmoji:true, color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
               taunt:'STILL BROKEN', winQuote:'HUMMER NERFED AGAIN!!', tier:'S-TIER (NERFED)',
               stats:{wingDrag:2.1,beakSharp:'SS',featherDens:12,peckDPS:31.4,hitbox:'BUGGED',nectarMeter:'EMPTY',staminaDrain:'SEVERE'} },
             { name:'SHOEBILL',   emoji:'🦤', color:'#556677', accent:'#334455', size:1.4, hp:65, speed:0.05, dmg:2.6, 
@@ -96,7 +96,7 @@
         let gameState = 'menu';
         let currentLevel = 0;
         let playerMeter = 0, aiMeter = 0;
-        let playerHP = 0, playerMaxHP = 50;
+        let playerHP = 0, playerMaxHP = 35;
         let aiHP = 0, aiMaxHP = 0;
         let combo = 0, score = 0, totalScore = 0, taps = 0;
         let peckAnim = 0, flashAnim = 0;
@@ -118,112 +118,97 @@
         function currentBird() { return BIRDS[currentLevel]; }
 
         function drawPixelBird(x, y, bird, facingLeft, lunge) {
-            const s = 1.2 * (bird.size || 1);
+            const emojiSize = Math.round(52 * (bird.size || 1));
             ctx.save();
             ctx.translate(x, y);
-            if (facingLeft) ctx.scale(-1, 1);
-            if (lunge > 0) ctx.translate(14*s, 0);
-            ctx.fillStyle = bird.color;
-            ctx.fillRect(-10*s, -7*s, 20*s, 14*s);
-            ctx.fillStyle = bird.accent;
-            ctx.fillRect(-5*s, -3*s, 12*s, 8*s);
-            ctx.fillStyle = bird.color;
-            ctx.fillRect(6*s, -9*s, 9*s, 9*s);
-            ctx.fillStyle = '#ffaa00';
-            ctx.fillRect(14*s, -4*s, 8*s, 4*s);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(9*s, -7*s, 3*s, 3*s);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(10*s, -6*s, 2*s, 2*s);
-            ctx.fillStyle = bird.accent;
-            ctx.fillRect(-12*s, -2*s, 5*s, 4*s);
-
-            if (bird.name === 'FLAMINGO') {
-                ctx.fillStyle = '#ff69b4';
-                ctx.fillRect(-2*s, 7*s, 3*s, 18*s);
-                ctx.fillRect(4*s, 7*s, 3*s, 18*s);
-            }
-            if (bird.name === 'PENGUIN') {
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(-6*s, -2*s, 12*s, 8*s);
-            }
-            if (bird.name === 'OWL') {
-                ctx.fillStyle = '#ffff00';
-                ctx.fillRect(7*s, -8*s, 5*s, 5*s);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(9*s, -7*s, 3*s, 3*s);
-            }
-            if (bird.name === 'EAGLE') {
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(6*s, -12*s, 9*s, 4*s);
-            }
-            if (bird.name === 'HUMMINGBIRD') {
-                ctx.fillStyle = '#001100';
-                ctx.fillRect(-12*s, -9*s, 30*s, 20*s);
-                ctx.fillStyle = bird.color;
-                ctx.fillRect(-5*s, -4*s, 10*s, 8*s);
-                ctx.fillStyle = bird.accent;
-                ctx.fillRect(3*s, -5*s, 5*s, 5*s);
-                ctx.fillStyle = '#ff8800';
-                ctx.fillRect(7*s, -3*s, 9*s, 2*s);
-                ctx.fillStyle = '#fff'; ctx.fillRect(4*s, -4*s, 2*s, 2*s);
-                ctx.fillStyle = '#000'; ctx.fillRect(5*s, -3*s, 1*s, 1*s);
-                ctx.fillStyle = 'rgba(0,204,136,0.3)';
-                for(let i=0;i<5;i++) ctx.fillRect(-8*s+Math.sin(frame*0.8+i)*3, -2*s+i*2, 6*s, 1*s);
-                if(frame%60 < 30) {
-                    ctx.fillStyle = '#ff0000';
-                    ctx.fillRect(-8*s, -9*s, 4*s, 2*s);
-                }
-            }
-            if (bird.name === 'SHOEBILL') {
-                ctx.fillStyle = '#8899aa';
-                ctx.fillRect(10*s, -8*s, 14*s, 10*s);
-                ctx.fillStyle = '#667788';
-                ctx.fillRect(12*s, -6*s, 10*s, 6*s);
-            }
-            if (bird.name === 'DODO') {
-                ctx.fillStyle = bird.color;
-                ctx.fillRect(-14*s, -10*s, 28*s, 20*s);
-                ctx.fillStyle = '#ff6666';
-                ctx.fillRect(8*s, -12*s, 10*s, 10*s);
-                ctx.fillStyle = '#ffcc00';
-                ctx.fillRect(16*s, -8*s, 10*s, 6*s);
-                if(frame%10<3) {
-                    ctx.fillStyle = `rgba(255,0,0,0.5)`;
-                    ctx.fillRect(-16*s+Math.random()*8, -12*s+Math.random()*8, 30*s, 2*s);
-                }
-            }
+            // Flip when desired direction !== natural emoji direction.
+            // flipEmoji:true means the emoji naturally faces RIGHT.
+            // facingLeft=true + flipEmoji=true  → flip (RIGHT→LEFT)
+            // facingLeft=true + flipEmoji=false → no flip (already LEFT)
+            // facingLeft=false + flipEmoji=false → flip (LEFT→RIGHT)
+            // facingLeft=false + flipEmoji=true  → no flip (already RIGHT)
+            if (facingLeft === !!bird.flipEmoji) ctx.scale(-1, 1);
+            // Lunge offset
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Draw the emoji at scaled size
+            ctx.font = `${emojiSize}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(bird.emoji, 0, 0);
+            // Opium Bird: keep the iconic spinning particles
             if (bird.name === 'OPIUM BIRD') {
-                ctx.fillStyle = '#000';
-                ctx.fillRect(-14*s, -12*s, 30*s, 24*s);
-                ctx.fillStyle = bird.color;
-                ctx.fillRect(-10*s, -8*s, 22*s, 16*s);
-                ctx.fillStyle = '#ff00ff';
-                ctx.fillRect(2*s, -6*s, 6*s, 6*s);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(4*s, -4*s, 3*s, 3*s);
-                for(let i=0;i<8;i++){
-                    ctx.fillStyle = `hsla(${frame*3+i*45},100%,50%,0.3)`;
-                    ctx.fillRect(Math.sin(frame*0.05+i)*20*s, Math.cos(frame*0.07+i)*15*s, 4*s, 4*s);
+                for (let i = 0; i < 8; i++) {
+                    ctx.fillStyle = `hsla(${frame*3+i*45},100%,60%,0.75)`;
+                    const px = Math.sin(frame*0.05+i) * emojiSize * 0.65;
+                    const py = Math.cos(frame*0.07+i) * emojiSize * 0.45;
+                    ctx.fillRect(px-3, py-3, 6, 6);
                 }
+            }
+            // Dodo: red static flicker
+            if (bird.name === 'DODO' && frame%10 < 3) {
+                ctx.fillStyle = 'rgba(255,0,0,0.35)';
+                ctx.fillRect(-emojiSize*0.6, -emojiSize*0.6, emojiSize*1.2, emojiSize*1.2);
             }
             ctx.restore();
         }
 
-        function drawPigeon(x, y, lunge) {
-            const s = 1.2;
-            ctx.save(); ctx.translate(x, y);
-            if (lunge > 0) ctx.translate(14*s, 0);
-            ctx.fillStyle = '#999'; ctx.fillRect(-10*s, -7*s, 20*s, 14*s);
-            ctx.fillStyle = '#777'; ctx.fillRect(-5*s, -3*s, 12*s, 8*s);
-            ctx.fillStyle = '#bbb'; ctx.fillRect(6*s, -9*s, 9*s, 9*s);
-            ctx.fillStyle = '#ffaa00'; ctx.fillRect(14*s, -4*s, 8*s, 4*s);
-            ctx.fillStyle = '#fff'; ctx.fillRect(9*s, -7*s, 3*s, 3*s);
-            ctx.fillStyle = '#000'; ctx.fillRect(10*s, -6*s, 2*s, 2*s);
-            ctx.fillStyle = `hsl(${frame*2%360},60%,40%)`;
-            ctx.fillRect(2*s, -1*s, 6*s, 4*s);
+        function drawPigeon(x, y, lunge, scale = 1) {
+            const s = 1.2 * scale;
+            ctx.save();
+            ctx.translate(x, y);
+            // Pixel-art pigeon, drawn facing RIGHT (head/beak on +x side)
+            if (lunge > 0) ctx.translate(lunge, 0);
+
+            // Tail (leftmost, slightly downward)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-19*s, 1*s, 7*s, 5*s);
+
+            // Body
+            ctx.fillStyle = '#888';
+            ctx.fillRect(-14*s, -5*s, 24*s, 13*s);
+
+            // Belly highlight
+            ctx.fillStyle = '#aaaaaa';
+            ctx.fillRect(-10*s, -1*s, 14*s, 8*s);
+
+            // Wing stripe
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-10*s, -4*s, 18*s, 2*s);
+
+            // Iridescent neck (shifts colour every frame)
+            ctx.fillStyle = `hsl(${frame*3%360},70%,45%)`;
+            ctx.fillRect(2*s, -7*s, 8*s, 7*s);
+
+            // Head
+            ctx.fillStyle = '#999';
+            ctx.fillRect(4*s, -11*s, 8*s, 8*s);
+
+            // Beak (upper + lower)
+            ctx.fillStyle = '#cc9900';
+            ctx.fillRect(11*s, -8*s, 6*s, 3*s);
+            ctx.fillStyle = '#aa8800';
+            ctx.fillRect(11*s, -6*s, 5*s, 2*s);
+
+            // Eye (white sclera, black pupil, orange iris dot)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(8*s, -10*s, 4*s, 4*s);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(9*s, -9*s, 2*s, 2*s);
+            ctx.fillStyle = '#ff6600';
+            ctx.fillRect(9*s, -9*s, 1*s, 1*s);
+
+            // Feet
+            ctx.fillStyle = '#cc7700';
+            ctx.fillRect(-3*s, 8*s, 2*s, 5*s);
+            ctx.fillRect(-6*s, 13*s, 4*s, 2*s);
+            ctx.fillRect(-3*s, 13*s, 5*s, 2*s);
+            ctx.fillRect(3*s, 8*s, 2*s, 5*s);
+            ctx.fillRect( 0*s, 13*s, 3*s, 2*s);
+            ctx.fillRect( 3*s, 13*s, 5*s, 2*s);
+
             ctx.restore();
         }
+
 
         function updateFakeHud() {
             fakeHudValues.wingDrag = (Math.sin(frame*0.02)*15 + 30 + combo*0.5).toFixed(1);
@@ -485,9 +470,9 @@
             }
             ctx.fillStyle = frame%30<15 ? '#00ff88' : '#004422';
             ctx.font = 'bold 16px monospace';
-            ctx.fillText('TAP TO RETRY', W/2, 470);
+            ctx.fillText('TAP TO RESTART RUN', W/2, 470);
             ctx.fillStyle = '#666'; ctx.font = '12px monospace';
-            ctx.fillText('(SAME ROUND)', W/2, 492);
+            ctx.fillText('(BACK TO ROUND 1)', W/2, 492);
         }
 
         function drawGauntletWin() {
@@ -527,7 +512,7 @@
             ctx.fillRect(0, 70, W, 70);
             ctx.fillStyle = '#ffff00'; ctx.font = 'bold 30px monospace'; ctx.textAlign = 'center';
             ctx.fillText('🏆 GAUNTLET COMPLETE 🏆', W / 2, 115);
-            ctx.fillStyle = '#00ff44'; ctx.font = 'bold 21px monospace';
+            ctx.fillStyle = '#00ff44'; ctx.font = 'bold 16px monospace';
             ctx.fillText('PIGEON ASCENDED TO PATCH NOTES', W / 2, 148);
 
             ctx.fillStyle = 'rgba(0,0,0,0.72)';
@@ -610,8 +595,9 @@
             ctx.fillStyle = ahpPct > 0.3 ? '#ff8844' : (frame%10<5 ? '#ff0000' : '#ff4444');
             ctx.fillRect(W-170,28, ahpPct*155, 18);
             ctx.strokeStyle = '#ff8844'; ctx.strokeRect(W-170,28,155,18);
+            drawPigeon(28, 58, 0, 0.4);
             ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.textAlign='left';
-            ctx.fillText(`🐦 PIGEON`, 15, 60);
+            ctx.fillText('PIGEON', 45, 60);
             ctx.fillStyle = '#aaaaaa'; ctx.font = '11px monospace';
             ctx.fillText(`${Math.ceil(playerHP)}/${playerMaxHP}`, 15, 73);
             ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace';
@@ -621,7 +607,8 @@
 
             drawFakeHud();
             drawPigeon(85 + peckAnim*2.5, 320, peckAnim>0 ? 25:0);
-            drawPixelBird(W-85 + peckAnim*-2.5, 320, b, true, peckAnim<0 ? 25:0);
+            const fightFacingLeft = b.name === 'HUMMINGBIRD' ? false : true;
+            drawPixelBird(W-85 + peckAnim*-2.5, 320, b, fightFacingLeft, peckAnim<0 ? 25:0);
 
             if (currentLevel === 5) {
                 ctx.fillStyle = 'rgba(0,0,0,0.8)';
@@ -732,7 +719,9 @@
             const b = currentBird();
             gameState = 'playing';
             playerMeter = 0; aiMeter = 0;
-            playerHP = playerMaxHP;
+            if (currentLevel === 0 || playerHP <= 0) {
+                playerHP = playerMaxHP;
+            }
             aiHP = b.hp; aiMaxHP = b.hp;
             combo = 0; taps = 0; score = 0; peckAnim = 0; flashAnim = 0;
             hudGlitch = 0; nerfAlertTimer = 0;
@@ -787,6 +776,9 @@
             }
 
             if (gameState === 'lose') {
+                currentLevel = 0;
+                totalScore = 0;
+                playerHP = playerMaxHP;
                 gameState = 'menu';
                 return;
             }
