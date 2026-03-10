@@ -32,7 +32,15 @@
 
         // ===== AUDIO SYNTHESIS (Arcade Style) =====
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function resumeAudioContext() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(err => console.log('Audio context resume error:', err));
+            }
+        }
+        
         function playTone(freq, duration, volume = 0.3, waveType = 'square') {
+            resumeAudioContext();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = waveType;
@@ -64,6 +72,21 @@
             playTone(1000, 0.05, 0.25, 'square');
         }
 
+        function playStartupJingle() {
+            // Pleasant startup tune - simple ascending melody
+            const notes = [
+                {f: 440, d: 150},   // A4
+                {f: 550, d: 150},   // C#5
+                {f: 660, d: 150},   // E5
+                {f: 880, d: 300}    // A5 - held longer
+            ];
+            let delay = 0;
+            notes.forEach(({f, d}) => {
+                setTimeout(() => playTone(f, d / 1000, 0.2, 'sine'), delay);
+                delay += d + 50;
+            });
+        }
+
         function playVictoryFanfare() {
             const notes = [660, 660, 660, 800, 660, 500, 600];
             const durations = [150, 150, 150, 300, 300, 150, 200];
@@ -92,31 +115,31 @@
 
         // ===== BIRD ROSTER =====
         const BIRDS = [
-            { name:'SEAGULL',    emoji:'\u{1F54A}\uFE0F', color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
+            { name:'SEAGULL',    color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
               taunt:'EZ LOBBY', winQuote:'SEAGULL MAINS MAD', tier:'D-TIER', 
               stats:{wingDrag:12.1,beakSharp:'C',featherDens:34,peckDPS:8.7,glideRatio:'0.4:1'} },
-            { name:'FLAMINGO',   emoji:'🦩', color:'#ff69b4', accent:'#ff1493', size:1.3, hp:45, speed:0.06, dmg:1.3, 
+            { name:'FLAMINGO',   color:'#ff69b4', accent:'#ff1493', size:1.3, hp:45, speed:0.06, dmg:1.3, 
               taunt:'HEALER DIFF', winQuote:'FLAMINGO HEALING NERFED', tier:'C-TIER',
               stats:{wingDrag:18.3,beakSharp:'B-',featherDens:41,peckDPS:6.2,healTick:'+2.1/s'} },
-            { name:'PENGUIN',    emoji:'🐧', color:'#4488ff', accent:'#2266cc', size:1.1, hp:38, speed:0.07, dmg:1.4, 
+            { name:'PENGUIN',    color:'#4488ff', accent:'#2266cc', size:1.1, hp:38, speed:0.07, dmg:1.4, 
               taunt:'SLIDE SPAMMER', winQuote:'PENGUIN SLIDE PATCHED', tier:'C+TIER',
               stats:{wingDrag:5.0,beakSharp:'B',featherDens:88,peckDPS:11.4,slideSpeed:'MACH 2'} },
-            { name:'OWL',        emoji:'🦉', flipEmoji:true, color:'#8B4513', accent:'#654321', size:1.0, hp:40, speed:0.07, dmg:1.6, 
+            { name:'OWL',        color:'#8B4513', accent:'#654321', size:1.0, hp:40, speed:0.07, dmg:1.6, 
               taunt:'STEALTH IS FAIR', winQuote:'OWL INVIS REMOVED', tier:'B-TIER',
               stats:{wingDrag:9.9,beakSharp:'A-',featherDens:62,peckDPS:14.1,stealthCD:'3.2s'} },
-            { name:'EAGLE',      emoji:'🦅', color:'#ffcc00', accent:'#cc9900', size:1.25, hp:50, speed:0.06, dmg:2.1, 
+            { name:'EAGLE',      color:'#ffcc00', accent:'#cc9900', size:1.25, hp:50, speed:0.06, dmg:2.1, 
               taunt:'NO SKILL BIRD', winQuote:'EAGLE CARRIED BY HITBOX', tier:'A-TIER',
               stats:{wingDrag:31.7,beakSharp:'S-',featherDens:55,peckDPS:19.8,diveBomb:'420dmg'} },
-            { name:'HUMMINGBIRD',emoji:'🐦', color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
+            { name:'HUMMINGBIRD',color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
               taunt:'STILL BROKEN', winQuote:'HUMMER NERFED AGAIN!!', tier:'S-TIER (NERFED)',
               stats:{wingDrag:2.1,beakSharp:'SS',featherDens:12,peckDPS:31.4,hitbox:'BUGGED',nectarMeter:'EMPTY',staminaDrain:'SEVERE'} },
-            { name:'SHOEBILL',   emoji:'🦤', color:'#556677', accent:'#334455', size:1.4, hp:65, speed:0.05, dmg:2.6, 
+            { name:'SHOEBILL',   color:'#556677', accent:'#334455', size:1.4, hp:65, speed:0.05, dmg:2.6, 
               taunt:'THE GOAT', winQuote:'SHOEBILL IS FAIR BTW', tier:'S+TIER',
               stats:{wingDrag:44.0,beakSharp:'SS+',featherDens:71,peckDPS:24.6,intimidate:'MAX',stareDown:'∞'} },
-            { name:'DODO',       emoji:'💀', color:'#ff4444', accent:'#cc0000', size:1.6, hp:85, speed:0.04, dmg:3.2, 
+            { name:'DODO',       color:'#ff4444', accent:'#cc0000', size:1.6, hp:85, speed:0.04, dmg:3.2, 
               taunt:'LEAVE NOW', winQuote:'HOW???', tier:'???-TIER',
               stats:{wingDrag:'N/A',beakSharp:'???',featherDens:'EXTINCT',peckDPS:'ERROR',existence:'ILLEGAL'} },
-            { name:'OPIUM BIRD', emoji:'👁️', color:'#9900ff', accent:'#6600cc', size:1.5, hp:90, speed:0.04, dmg:3.5, 
+            { name:'OPIUM BIRD', color:'#9900ff', accent:'#6600cc', size:1.5, hp:90, speed:0.04, dmg:3.5, 
               taunt:'EROSION', winQuote:'OPIUM BIRD UNLOCKED???', tier:'BANNED',
               stats:{wingDrag:'∞',beakSharp:'VOID',featherDens:'NONE',peckDPS:'REDACTED',dimension:'4TH',rarity:'0.001%'} },
         ];
@@ -165,6 +188,7 @@
         let shakeX = 0, shakeY = 0;
         let patchScrollY = 0;
         let dodoWarningTimer = 0;
+        let startupJinglePlayed = false;
         let hudGlitch = 0;
         let nerfAlertTimer = 0, nerfAlertText = '';
         let transitionTimer = 0;
@@ -178,37 +202,276 @@
 
         function currentBird() { return BIRDS[currentLevel]; }
 
-        function drawPixelBird(x, y, bird, facingLeft, lunge) {
-            const emojiSize = Math.round(52 * (bird.size || 1));
+        function drawSeagull(x, y, lunge, scale = 1) {
+            const s = scale;
             ctx.save();
             ctx.translate(x, y);
-            // Flip when desired direction !== natural emoji direction.
-            // flipEmoji:true means the emoji naturally faces RIGHT.
-            // facingLeft=true + flipEmoji=true  → flip (RIGHT→LEFT)
-            // facingLeft=true + flipEmoji=false → no flip (already LEFT)
-            // facingLeft=false + flipEmoji=false → flip (LEFT→RIGHT)
-            // facingLeft=false + flipEmoji=true  → no flip (already RIGHT)
-            if (facingLeft === !!bird.flipEmoji) ctx.scale(-1, 1);
-            // Lunge offset
             if (lunge > 0) ctx.translate(lunge, 0);
-            // Draw the emoji at scaled size
-            ctx.font = `${emojiSize}px serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(bird.emoji, 0, 0);
-            // Opium Bird: keep the iconic spinning particles
-            if (bird.name === 'OPIUM BIRD') {
-                for (let i = 0; i < 8; i++) {
-                    ctx.fillStyle = `hsla(${frame*3+i*45},100%,60%,0.75)`;
-                    const px = Math.sin(frame*0.05+i) * emojiSize * 0.65;
-                    const py = Math.cos(frame*0.07+i) * emojiSize * 0.45;
-                    ctx.fillRect(px-3, py-3, 6, 6);
-                }
+            // Body (gray)
+            ctx.fillStyle = '#aaaaaa';
+            ctx.fillRect(-8*s, -4*s, 16*s, 10*s);
+            // Wings
+            ctx.fillStyle = '#888888';
+            ctx.fillRect(-12*s, -3*s, 5*s, 8*s);
+            ctx.fillRect(7*s, -3*s, 5*s, 8*s);
+            // Head
+            ctx.fillStyle = '#cccccc';
+            ctx.fillRect(4*s, -8*s, 6*s, 6*s);
+            // Eye
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(7*s, -6*s, 2*s, 2*s);
+            // Beak
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(10*s, -5*s, 4*s, 1*s);
+            ctx.restore();
+        }
+
+        function drawFlamingo(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Body (rotund, characteristic shape)
+            ctx.fillStyle = '#ff69b4';
+            ctx.fillRect(-9*s, -4*s, 16*s, 9*s);
+            // Body highlight (lighter pink)
+            ctx.fillStyle = '#ff85c1';
+            ctx.fillRect(-7*s, -2*s, 12*s, 5*s);
+            // Long S-curve neck
+            ctx.fillStyle = '#ff69b4';
+            ctx.fillRect(0*s, -14*s, 3*s, 10*s);
+            // Neck curve detail
+            ctx.fillStyle = '#ff85c1';
+            ctx.fillRect(0*s, -12*s, 2*s, 3*s);
+            // Head
+            ctx.fillStyle = '#ff1493';
+            ctx.fillRect(0*s, -18*s, 5*s, 4*s);
+            // Beak (curved downward)
+            ctx.fillStyle = '#ffaa00';
+            ctx.fillRect(4*s, -16*s, 4*s, 1*s);
+            ctx.fillRect(5*s, -15*s, 2*s, 1*s);
+            // Eye
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(2*s, -17*s, 1*s, 1*s);
+            // Legs (long and thin, characteristic)
+            ctx.fillStyle = '#ff1493';
+            ctx.fillRect(-3*s, 5*s, 1*s, 8*s);
+            ctx.fillRect(4*s, 5*s, 1*s, 8*s);
+            ctx.restore();
+        }
+
+        function drawPenguin(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Body (black)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-6*s, -8*s, 12*s, 14*s);
+            // Belly (white)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-4*s, -6*s, 8*s, 10*s);
+            // Head (black)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-4*s, -12*s, 8*s, 6*s);
+            // Eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-2*s, -11*s, 2*s, 2*s);
+            ctx.fillRect(2*s, -11*s, 2*s, 2*s);
+            // Beak
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(0*s, -9*s, 2*s, 2*s);
+            // Feet
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(-4*s, 6*s, 3*s, 2*s);
+            ctx.fillRect(1*s, 6*s, 3*s, 2*s);
+            ctx.restore();
+        }
+
+        function drawOwl(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Body
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-7*s, -6*s, 14*s, 12*s);
+            // Head
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(-6*s, -14*s, 12*s, 10*s);
+            // Ear tufts
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-6*s, -16*s, 2*s, 3*s);
+            ctx.fillRect(4*s, -16*s, 2*s, 3*s);
+            // Big eyes (white)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-4*s, -12*s, 3*s, 4*s);
+            ctx.fillRect(1*s, -12*s, 3*s, 4*s);
+            // Pupils
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-3*s, -11*s, 2*s, 2*s);
+            ctx.fillRect(2*s, -11*s, 2*s, 2*s);
+            // Beak
+            ctx.fillStyle = '#ffaa00';
+            ctx.fillRect(-1*s, -8*s, 2*s, 2*s);
+            ctx.restore();
+        }
+
+        function drawEagle(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Body (brown)
+            ctx.fillStyle = '#8B6F47';
+            ctx.fillRect(-7*s, -5*s, 14*s, 10*s);
+            // Wings spread wide
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(-16*s, -3*s, 7*s, 9*s);
+            ctx.fillRect(9*s, -3*s, 7*s, 9*s);
+            // Wing detail (lighter stripe)
+            ctx.fillStyle = '#9B8F67';
+            ctx.fillRect(-15*s, -1*s, 6*s, 3*s);
+            ctx.fillRect(10*s, -1*s, 6*s, 3*s);
+            // Head (golden)
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(4*s, -11*s, 7*s, 7*s);
+            // Eye (fierce!)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(7*s, -9*s, 2*s, 2*s);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(8*s, -8*s, 1*s, 1*s);
+            // Hooked beak (prominent)
+            ctx.fillStyle = '#cc8800';
+            ctx.fillRect(11*s, -8*s, 5*s, 2*s);
+            ctx.fillStyle = '#aa6600';
+            ctx.fillRect(11*s, -6*s, 4*s, 1*s);
+            // Talons (feet)
+            ctx.fillStyle = '#ffaa00';
+            ctx.fillRect(-3*s, 5*s, 2*s, 3*s);
+            ctx.fillRect(1*s, 5*s, 2*s, 3*s);
+            ctx.restore();
+        }
+
+        function drawHummingbird(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Body (tiny and iridescent)
+            ctx.fillStyle = `hsl(${frame*5%360},100%,45%)`;
+            ctx.fillRect(-2*s, -2*s, 4*s, 5*s);
+            // Head (distinct)
+            ctx.fillStyle = `hsl(${frame*6%360},100%,50%)`;
+            ctx.fillRect(-1.5*s, -5*s, 3*s, 3*s);
+            // Long needle-like beak
+            ctx.fillStyle = '#888888';
+            ctx.fillRect(1.5*s, -4*s, 5*s, 0.5*s);
+            // Tail (spread)
+            ctx.fillStyle = `hsl(${frame*4%360},80%,45%)`;
+            ctx.fillRect(-2*s, 3*s, 4*s, 2*s);
+            // Wing beats (animated, rapid motion)
+            ctx.fillStyle = `hsla(${frame*12%360},90%,55%,0.7)`;
+            ctx.fillRect(-3.5*s, 0*s, 1*s, 3*s);
+            ctx.fillRect(2.5*s, 0*s, 1*s, 3*s);
+            ctx.restore();
+        }
+
+        function drawShoebill(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Body
+            ctx.fillStyle = '#556677';
+            ctx.fillRect(-8*s, -6*s, 16*s, 12*s);
+            // Long neck
+            ctx.fillStyle = '#778899';
+            ctx.fillRect(-2*s, -12*s, 4*s, 6*s);
+            // Head
+            ctx.fillStyle = '#334455';
+            ctx.fillRect(-4*s, -16*s, 8*s, 6*s);
+            // HUGE beak
+            ctx.fillStyle = '#999999';
+            ctx.fillRect(2*s, -14*s, 6*s, 3*s);
+            ctx.fillStyle = '#777777';
+            ctx.fillRect(2*s, -11*s, 5*s, 1*s);
+            // Eye
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-1*s, -15*s, 2*s, 2*s);
+            // Legs
+            ctx.fillStyle = '#556677';
+            ctx.fillRect(-4*s, 6*s, 2*s, 6*s);
+            ctx.fillRect(2*s, 6*s, 2*s, 6*s);
+            ctx.restore();
+        }
+
+        function drawDodo(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Round body (heavy!)
+            ctx.fillStyle = '#8B6B47';
+            ctx.fillRect(-10*s, -6*s, 18*s, 14*s);
+            // Head
+            ctx.fillStyle = '#A0826D';
+            ctx.fillRect(-4*s, -12*s, 8*s, 8*s);
+            // Beak
+            ctx.fillStyle = '#ccaa44';
+            ctx.fillRect(3*s, -10*s, 4*s, 2*s);
+            // Eye
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0*s, -11*s, 2*s, 2*s);
+            // Red static flicker (keeps special effect)
+            if (frame%10 < 3) {
+                ctx.fillStyle = 'rgba(255,0,0,0.25)';
+                ctx.fillRect(-10*s, -12*s, 18*s, 20*s);
             }
-            // Dodo: red static flicker
-            if (bird.name === 'DODO' && frame%10 < 3) {
-                ctx.fillStyle = 'rgba(255,0,0,0.35)';
-                ctx.fillRect(-emojiSize*0.6, -emojiSize*0.6, emojiSize*1.2, emojiSize*1.2);
+            ctx.restore();
+        }
+
+        function drawOpiumBird(x, y, lunge, scale = 1) {
+            const s = scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (lunge > 0) ctx.translate(lunge, 0);
+            // Giant eye
+            ctx.fillStyle = '#9900ff';
+            ctx.fillRect(-8*s, -8*s, 16*s, 16*s);
+            // Pupil (animated)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-4*s, -4*s, 8*s, 8*s);
+            // Iris glow
+            ctx.fillStyle = `hsla(${frame*8%360},100%,50%,0.5)`;
+            ctx.fillRect(-3*s, -3*s, 6*s, 6*s);
+            // Spinning particles (keeps special effect)
+            for (let i = 0; i < 6; i++) {
+                ctx.fillStyle = `hsla(${frame*3+i*60},100%,60%,0.7)`;
+                const px = Math.sin(frame*0.05+i) * 10 * s;
+                const py = Math.cos(frame*0.07+i) * 10 * s;
+                ctx.fillRect(px-2*s, py-2*s, 4*s, 4*s);
+            }
+            ctx.restore();
+        }
+
+        function drawPixelBird(x, y, bird, facingLeft, lunge, customScale = null) {
+            const scale = customScale ?? ((bird.size || 1) * 1.8);
+            ctx.save();
+            ctx.translate(x, y);
+            // All birds drawn facing RIGHT, flip if needed
+            if (facingLeft) ctx.scale(-1, 1);
+            
+            switch(bird.name) {
+                case 'SEAGULL':     drawSeagull(0, 0, lunge, scale); break;
+                case 'FLAMINGO':    drawFlamingo(0, 0, lunge, scale); break;
+                case 'PENGUIN':     drawPenguin(0, 0, lunge, scale); break;
+                case 'OWL':         drawOwl(0, 0, lunge, scale); break;
+                case 'EAGLE':       drawEagle(0, 0, lunge, scale); break;
+                case 'HUMMINGBIRD': drawHummingbird(0, 0, lunge, scale); break;
+                case 'SHOEBILL':    drawShoebill(0, 0, lunge, scale); break;
+                case 'DODO':        drawDodo(0, 0, lunge, scale); break;
+                case 'OPIUM BIRD':  drawOpiumBird(0, 0, lunge, scale); break;
             }
             ctx.restore();
         }
@@ -280,36 +543,36 @@
 
         function drawFakeHud() {
             ctx.fillStyle = 'rgba(0,20,0,0.85)';
-            ctx.fillRect(5, 75, 120, 78);
+            ctx.fillRect(5, 90, 145, 85);
             ctx.strokeStyle = '#00ff44'; ctx.lineWidth = 1;
-            ctx.strokeRect(5, 75, 120, 78);
-            ctx.fillStyle = '#00ff44'; ctx.font = '9px monospace'; ctx.textAlign = 'left';
-            ctx.fillText(`WING DRAG: ${fakeHudValues.wingDrag}`, 10, 88);
-            ctx.fillText(`BEAK: ${fakeHudValues.beakSharp}`, 10, 100);
-            ctx.fillText(`MOMENTUM: ${fakeHudValues.momentum}`, 10, 112);
-            ctx.fillText(`PECK SYNC: ${fakeHudValues.peckSync}`, 10, 124);
+            ctx.strokeRect(5, 90, 145, 85);
+            ctx.fillStyle = '#00ff44'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText(`WING DRAG: ${fakeHudValues.wingDrag}`, 10, 102);
+            ctx.fillText(`BEAK: ${fakeHudValues.beakSharp}`, 10, 112);
+            ctx.fillText(`MOMENTUM: ${fakeHudValues.momentum}`, 10, 122);
+            ctx.fillText(`PECK SYNC: ${fakeHudValues.peckSync}`, 10, 132);
             ctx.fillStyle = '#ffff00';
-            ctx.fillText(`FEATHER: ${Math.floor(frame*0.3%99)+1}/99`, 10, 136);
-            ctx.fillText(`LOBBY: #${(frame*7%9999).toString().padStart(4,'0')}`, 10, 148);
+            ctx.fillText(`FEATHER: ${Math.floor(frame*0.3%99)+1}/99`, 10, 142);
+            ctx.fillText(`LOBBY: #${(frame*7%9999).toString().padStart(4,'0')}`, 10, 152);
 
             const b = currentBird();
             ctx.fillStyle = 'rgba(20,0,0,0.85)';
-            ctx.fillRect(W-125, 75, 120, 78);
+            ctx.fillRect(W-150, 90, 145, 85);
             ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 1;
-            ctx.strokeRect(W-125, 75, 120, 78);
-            ctx.fillStyle = '#ff8844'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+            ctx.strokeRect(W-150, 90, 145, 85);
+            ctx.fillStyle = '#ff8844'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
             const s = b.stats;
-            ctx.fillText(`DRAG: ${s.wingDrag}`, W-10, 88);
-            ctx.fillText(`BEAK: ${s.beakSharp}`, W-10, 100);
-            ctx.fillText(`DPS: ${s.peckDPS}`, W-10, 112);
-            ctx.fillText(`DENS: ${s.featherDens}`, W-10, 124);
+            ctx.fillText(`DRAG: ${s.wingDrag}`, W-10, 102);
+            ctx.fillText(`BEAK: ${s.beakSharp}`, W-10, 112);
+            ctx.fillText(`DPS: ${s.peckDPS}`, W-10, 122);
+            ctx.fillText(`DENS: ${s.featherDens}`, W-10, 132);
             const extraKey = Object.keys(s).find(k => !['wingDrag','beakSharp','featherDens','peckDPS'].includes(k));
             if (extraKey) {
                 ctx.fillStyle = '#ff4444';
-                ctx.fillText(`${extraKey.toUpperCase()}: ${s[extraKey]}`, W-10, 136);
+                ctx.fillText(`${extraKey.toUpperCase()}: ${s[extraKey]}`, W-10, 142);
             }
             ctx.fillStyle = '#ff6666';
-            ctx.fillText(`TIER: ${b.tier}`, W-10, 148);
+            ctx.fillText(`TIER: ${b.tier}`, W-10, 152);
         }
 
         function drawNerfAlert() {
@@ -359,7 +622,7 @@
             ctx.font = '14px monospace'; ctx.fillStyle = '#00ff88';
             ctx.fillText('YOU ARE PIGEON. DEFEAT ALL BIRDS.', W/2, 130);
             ctx.fillStyle = '#ffaa00'; ctx.font = '12px monospace';
-            ctx.fillText(`9 ROUNDS | ${BIRDS.map(b=>b.emoji).join(' ')}`, W/2, 150);
+            ctx.fillText(`9 ROUNDS`, W/2, 150);
             ctx.fillStyle = '#ffff00'; ctx.font = 'bold 16px monospace';
             ctx.fillText(`ROUND ${currentLevel+1}: ${currentBird().name}`, W/2, 185);
             ctx.fillStyle = currentBird().color;
@@ -371,7 +634,9 @@
                 const beaten = i < currentLevel;
                 const current = i === currentLevel;
                 ctx.fillStyle = beaten ? '#006600' : (current ? '#ffff00' : '#333333');
-                ctx.fillText(`${beaten ? '✓' : current ? '►' : ' '} ${BIRDS[i].emoji} ${BIRDS[i].name}`, 30, y);
+                ctx.fillText(`${beaten ? '✓' : current ? '►' : ' '}`, 30, y);
+                drawPixelBird(53, y - 4, BIRDS[i], false, 0, 0.55);
+                ctx.fillText(`${BIRDS[i].name}`, 67, y);
                 ctx.textAlign = 'right';
                 ctx.fillStyle = beaten ? '#004400' : (current ? '#ffaa00' : '#222222');
                 ctx.fillText(BIRDS[i].tier, W-30, y);
@@ -600,7 +865,7 @@
                 ctx.fillStyle = BIRDS[i].color;
                 const col = i < 5 ? 0 : 1;
                 const row = i < 5 ? i : i - 5;
-                ctx.fillText(`${BIRDS[i].emoji} ${BIRDS[i].name} ✓`, 84 + col * 176, 425 + row * 20);
+                ctx.fillText(`${BIRDS[i].name} ✓`, 84 + col * 176, 425 + row * 20);
             }
 
             ctx.fillStyle = '#ff4444'; ctx.font = 'bold 13px monospace';
@@ -644,10 +909,10 @@
             }
 
             ctx.fillStyle = '#ffff00'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-            ctx.fillText(`ROUND ${currentLevel+1}/9 — ${b.emoji} ${b.name} ${b.emoji}`, W/2, 16);
+            ctx.fillText(`ROUND ${currentLevel+1}/9 — ${b.name}`, W/2, 16);
 
             ctx.fillStyle = 'rgba(0,0,0,0.85)';
-            ctx.fillRect(10,22,165,48); ctx.fillRect(W-175,22,165,48);
+            ctx.fillRect(10,22,165,58); ctx.fillRect(W-175,22,165,58);
             const phpPct = Math.max(0, playerHP / playerMaxHP);
             ctx.fillStyle = phpPct > 0.3 ? '#00ff44' : (frame%10<5 ? '#ff0000' : '#ff4444');
             ctx.fillRect(15,28, phpPct*155, 18);
@@ -656,15 +921,15 @@
             ctx.fillStyle = ahpPct > 0.3 ? '#ff8844' : (frame%10<5 ? '#ff0000' : '#ff4444');
             ctx.fillRect(W-170,28, ahpPct*155, 18);
             ctx.strokeStyle = '#ff8844'; ctx.strokeRect(W-170,28,155,18);
-            drawPigeon(28, 58, 0, 0.4);
+            drawPigeon(28, 57, 0, 0.4);
             ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.textAlign='left';
-            ctx.fillText('PIGEON', 45, 60);
+            ctx.fillText('PIGEON', 45, 59);
             ctx.fillStyle = '#aaaaaa'; ctx.font = '11px monospace';
-            ctx.fillText(`${Math.ceil(playerHP)}/${playerMaxHP}`, 15, 73);
+            ctx.fillText(`${Math.ceil(playerHP)}/${playerMaxHP}`, 15, 76);
             ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace';
-            ctx.fillText(`${b.name} ${b.emoji}`, W-165, 60);
+            ctx.fillText(`${b.name}`, W-165, 59);
             ctx.fillStyle = '#aaaaaa'; ctx.font = '11px monospace';
-            ctx.fillText(`${Math.ceil(aiHP)}/${aiMaxHP}`, W-165, 73);
+            ctx.fillText(`${Math.ceil(aiHP)}/${aiMaxHP}`, W-165, 76);
 
             drawFakeHud();
             drawPigeon(85 + peckAnim*2.5, 320, peckAnim>0 ? 25:0);
@@ -792,6 +1057,12 @@
 
         function handleTap(e) {
             e.preventDefault();
+
+            // Play startup jingle on first interaction
+            if (!startupJinglePlayed) {
+                startupJinglePlayed = true;
+                playStartupJingle();
+            }
 
             if (gameState === 'menu') {
                 if (frame - menuStartFrame <= 45) {
