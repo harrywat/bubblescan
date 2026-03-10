@@ -30,6 +30,66 @@
         ctx.imageSmoothingEnabled = false;
         const W = 360, H = 640;
 
+        // ===== AUDIO SYNTHESIS (Arcade Style) =====
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, duration, volume = 0.3, waveType = 'square') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = waveType;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playPeckSound(isPlayer = true) {
+            if (isPlayer) {
+                playTone(800, 0.08, 0.25, 'square');
+                setTimeout(() => playTone(1200, 0.05, 0.2, 'square'), 40);
+            } else {
+                playTone(600, 0.1, 0.25, 'square');
+                setTimeout(() => playTone(900, 0.08, 0.2, 'square'), 50);
+            }
+        }
+
+        function playHitSound() {
+            playTone(1400, 0.06, 0.3, 'sine');
+            setTimeout(() => playTone(1800, 0.1, 0.25, 'sine'), 30);
+        }
+
+        function playUISound() {
+            playTone(1000, 0.05, 0.25, 'square');
+        }
+
+        function playVictoryFanfare() {
+            const notes = [660, 660, 660, 800, 660, 500, 600];
+            const durations = [150, 150, 150, 300, 300, 150, 200];
+            let delay = 0;
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, durations[i] / 1000, 0.3, 'square'), delay);
+                delay += durations[i];
+            });
+        }
+
+        function playLevelTransition() {
+            const notes = [
+                {f: 523, d: 150},   // C5
+                {f: 659, d: 150},   // E5
+                {f: 784, d: 150},   // G5
+                {f: 1047, d: 300}   // C6 - held longer
+            ];
+            let delay = 0;
+            notes.forEach(({f, d}) => {
+                setTimeout(() => playTone(f, d / 1000, 0.3, 'sine'), delay);
+                delay += d + 50;
+            });
+        }
+
+        let transitionSoundTimeout;
+
         // ===== BIRD ROSTER =====
         const BIRDS = [
             { name:'SEAGULL',    emoji:'\u{1F54A}\uFE0F', color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
@@ -112,6 +172,7 @@
         let gauntletWinStartFrame = 0;
         let introStartFrame = 0;
         let prebattleStartFrame = 0;
+        let menuStartFrame = 0;
 
         let fakeHudValues = { wingDrag:0, beakSharp:0, momentum:0, peckSync:0 };
 
@@ -685,6 +746,7 @@
             if (aiMeter >= 10) {
                 aiMeter = 0;
                 playerHP -= b.dmg;
+                playPeckSound(false);
                 peckAnim = -35;
                 combo = Math.max(0, combo - 2);
                 flashAnim = 0.8;
@@ -732,6 +794,10 @@
             e.preventDefault();
 
             if (gameState === 'menu') {
+                if (frame - menuStartFrame <= 45) {
+                    return;
+                }
+                playUISound();
                 gameState = 'intro';
                 introStartFrame = frame;
                 return;
@@ -765,12 +831,16 @@
             }
 
             if (gameState === 'transition') {
+                playUISound();
                 currentLevel++;
                 if (currentLevel >= BIRDS.length) {
+                    playVictoryFanfare();
                     gameState = 'gauntletwin';
                     gauntletWinStartFrame = frame;
                 } else {
+                    playLevelTransition();
                     gameState = 'menu';
+                    menuStartFrame = frame;
                 }
                 return;
             }
@@ -780,6 +850,7 @@
                 totalScore = 0;
                 playerHP = playerMaxHP;
                 gameState = 'menu';
+                menuStartFrame = frame;
                 return;
             }
 
@@ -790,6 +861,7 @@
                 currentLevel = 0;
                 totalScore = 0;
                 gameState = 'menu';
+                menuStartFrame = frame;
                 return;
             }
 
@@ -803,12 +875,14 @@
             lastTap = now;
             flashAnim = 0.6;
 
-            playerMeter += 1.3 + (combo * 0.1);
+            playerMeter += 0.8 + (combo * 0.05);
 
             if (playerMeter >= 10 && canDamage) {
                 playerMeter -= 10;
                 const dmg = 1.5 + (combo / 5);
                 aiHP -= dmg;
+                playPeckSound(true);
+                playHitSound();
                 peckAnim = 35;
                 score += 20 + combo * 3;
                 shakeX = (Math.random()-0.5)*4;
