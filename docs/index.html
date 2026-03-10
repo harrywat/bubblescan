@@ -423,10 +423,14 @@
             // Eye
             ctx.fillStyle = '#000000';
             ctx.fillRect(0*s, -11*s, 2*s, 2*s);
-            // Red static flicker (keeps special effect)
+            // Red static flicker (particle-style, no box)
             if (frame%10 < 3) {
-                ctx.fillStyle = 'rgba(255,0,0,0.25)';
-                ctx.fillRect(-10*s, -12*s, 18*s, 20*s);
+                for (let i = 0; i < 12; i++) {
+                    ctx.fillStyle = `rgba(255,0,0,${0.15 + Math.random() * 0.2})`;
+                    const px = (-12 + Math.random() * 22) * s;
+                    const py = (-14 + Math.random() * 24) * s;
+                    ctx.fillRect(px, py, 1.5*s, 1.5*s);
+                }
             }
             ctx.restore();
         }
@@ -667,10 +671,36 @@
             const canContinue = introFrames > 75;
 
             const bg = ctx.createLinearGradient(0, 0, 0, H);
-            bg.addColorStop(0, '#000');
-            bg.addColorStop(1, '#001100');
+            bg.addColorStop(0, '#000814');
+            bg.addColorStop(0.55, '#001a10');
+            bg.addColorStop(1, '#000b07');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, W, H);
+
+            const aura = ctx.createRadialGradient(W / 2, 255, 15, W / 2, 255, 170);
+            aura.addColorStop(0, `${b.color}55`);
+            aura.addColorStop(0.5, `${b.color}22`);
+            aura.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = aura;
+            ctx.fillRect(0, 90, W, 320);
+
+            ctx.strokeStyle = `${b.color}66`;
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                const r = 62 + i * 20 + Math.sin(frame * 0.03 + i) * 3;
+                ctx.beginPath();
+                ctx.arc(W / 2, 252, r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = 'rgba(0,255,120,0.08)';
+            ctx.lineWidth = 1;
+            for (let y = 0; y < H; y += 7) {
+                ctx.beginPath();
+                ctx.moveTo(0, y + (frame % 7));
+                ctx.lineTo(W, y + (frame % 7));
+                ctx.stroke();
+            }
 
             for (let i = 0; i < 24; i++) {
                 ctx.fillStyle = `hsla(${(frame * 2 + i * 15) % 360},100%,60%,0.25)`;
@@ -948,8 +978,14 @@
                     ctx.fillStyle = '#ff4444'; ctx.font = '9px monospace';
                     ctx.fillText('🔊 BZZZZ', W-85, 370);
                 }
-                ctx.fillStyle = 'rgba(255,100,0,0.15)';
-                if(frame%120 < 15) ctx.fillRect(W-160, 280, 140, 80);
+                if(frame%120 < 20) {
+                    for (let i = 0; i < 14; i++) {
+                        ctx.fillStyle = `hsla(${20 + i * 6},100%,55%,0.28)`;
+                        const sx = W - 125 + Math.sin(frame * 0.11 + i) * 40;
+                        const sy = 320 + Math.cos(frame * 0.13 + i * 0.7) * 24;
+                        ctx.fillRect(sx, sy, 3, 3);
+                    }
+                }
             }
 
             ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
