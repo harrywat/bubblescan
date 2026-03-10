@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🕹️ Bird Game 2 Peck Duel - HARD MODE 🕹️</title>
+    <title>🕹️ BIRD GAME 3 - PECK GAUNTLET 🕹️</title>
     <style>
-        * { touch-action: manipulation; }
+        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         body { 
             margin: 0; padding: 0; overflow: hidden; background: #000; 
             font-family: monospace; height: 100vh;
@@ -24,240 +24,811 @@
 <body>
     <canvas id="c" width="360" height="640"></canvas>
     <script>
-        console.log('🦜 HARD MODE LOADED - Perth Night Grind!');
+        console.log('🦜 BIRD GAME 3 - PECK GAUNTLET LOADED');
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
         const W = 360, H = 640;
-        let gameState = 'menu'; // menu, playing, win, lose
+
+        // ===== BIRD ROSTER =====
+        const BIRDS = [
+            { name:'SEAGULL',    emoji:'🕊️', color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
+              taunt:'EZ LOBBY', winQuote:'SEAGULL MAINS MAD', tier:'D-TIER', 
+              stats:{wingDrag:12.1,beakSharp:'C',featherDens:34,peckDPS:8.7,glideRatio:'0.4:1'} },
+            { name:'FLAMINGO',   emoji:'🦩', color:'#ff69b4', accent:'#ff1493', size:1.3, hp:45, speed:0.06, dmg:1.3, 
+              taunt:'HEALER DIFF', winQuote:'FLAMINGO HEALING NERFED', tier:'C-TIER',
+              stats:{wingDrag:18.3,beakSharp:'B-',featherDens:41,peckDPS:6.2,healTick:'+2.1/s'} },
+            { name:'PENGUIN',    emoji:'🐧', color:'#4488ff', accent:'#2266cc', size:1.1, hp:38, speed:0.07, dmg:1.4, 
+              taunt:'SLIDE SPAMMER', winQuote:'PENGUIN SLIDE PATCHED', tier:'C+TIER',
+              stats:{wingDrag:5.0,beakSharp:'B',featherDens:88,peckDPS:11.4,slideSpeed:'MACH 2'} },
+            { name:'OWL',        emoji:'🦉', color:'#8B4513', accent:'#654321', size:1.0, hp:40, speed:0.07, dmg:1.6, 
+              taunt:'STEALTH IS FAIR', winQuote:'OWL INVIS REMOVED', tier:'B-TIER',
+              stats:{wingDrag:9.9,beakSharp:'A-',featherDens:62,peckDPS:14.1,stealthCD:'3.2s'} },
+            { name:'EAGLE',      emoji:'🦅', color:'#ffcc00', accent:'#cc9900', size:1.25, hp:50, speed:0.06, dmg:2.1, 
+              taunt:'NO SKILL BIRD', winQuote:'EAGLE CARRIED BY HITBOX', tier:'A-TIER',
+              stats:{wingDrag:31.7,beakSharp:'S-',featherDens:55,peckDPS:19.8,diveBomb:'420dmg'} },
+            { name:'HUMMINGBIRD',emoji:'🐦', color:'#00cc88', accent:'#009966', size:0.7, hp:28, speed:0.15, dmg:1.8, 
+              taunt:'STILL BROKEN', winQuote:'HUMMER NERFED AGAIN!!', tier:'S-TIER (NERFED)',
+              stats:{wingDrag:2.1,beakSharp:'SS',featherDens:12,peckDPS:31.4,hitbox:'BUGGED',nectarMeter:'EMPTY',staminaDrain:'SEVERE'} },
+            { name:'SHOEBILL',   emoji:'🦤', color:'#556677', accent:'#334455', size:1.4, hp:65, speed:0.05, dmg:2.6, 
+              taunt:'THE GOAT', winQuote:'SHOEBILL IS FAIR BTW', tier:'S+TIER',
+              stats:{wingDrag:44.0,beakSharp:'SS+',featherDens:71,peckDPS:24.6,intimidate:'MAX',stareDown:'∞'} },
+            { name:'DODO',       emoji:'💀', color:'#ff4444', accent:'#cc0000', size:1.6, hp:85, speed:0.04, dmg:3.2, 
+              taunt:'LEAVE NOW', winQuote:'HOW???', tier:'???-TIER',
+              stats:{wingDrag:'N/A',beakSharp:'???',featherDens:'EXTINCT',peckDPS:'ERROR',existence:'ILLEGAL'} },
+            { name:'OPIUM BIRD', emoji:'👁️', color:'#9900ff', accent:'#6600cc', size:1.5, hp:90, speed:0.04, dmg:3.5, 
+              taunt:'EROSION', winQuote:'OPIUM BIRD UNLOCKED???', tier:'BANNED',
+              stats:{wingDrag:'∞',beakSharp:'VOID',featherDens:'NONE',peckDPS:'REDACTED',dimension:'4TH',rarity:'0.001%'} },
+        ];
+
+        const PATCH_NOTES = [
+            'v3.47 - Shoebill stare nerfed (was instant KO)',
+            'v3.46 - Hummingbird hitbox increased 400%',
+            'v3.45 - Opium Bird removed for maintenance',
+            'v3.44 - Penguin slide now costs stamina',
+            'v3.43 - Dodo spawn rate reduced to 0.01%',
+            'v3.42 - Flamingo heal tick halved AGAIN',
+            'v3.41 - Eagle dive bomb cooldown +2s',
+            'v3.40 - Owl stealth duration capped at 3s',
+            'v3.39 - Seagull peck range reduced 15%',
+            'v3.38 - HUMMER NECTAR METER ADDED',
+            'v3.37 - Hummingbird wings now audible globally',
+            'v3.36 - Pigeon peck spam unchanged (working as intended)',
+            'v3.35 - Dodo removed from ranked (jk)',
+            'v3.34 - Shoebill intimidate aura radius -10%',
+            'v3.33 - Bird Game 4 announcement was fake',
+            'v3.32 - Hummingbird stamina drain DOUBLED',
+            'v3.31 - Fixed bug where Dodo could fly',
+            'v3.30 - Opium Bird health pool "adjusted"',
+            'v3.29 - Pigeon is fair and balanced - devs',
+            'v3.28 - Hummingbird rest-on-flower mechanic added',
+        ];
+
+        const HUMMER_NERFS = [
+            '⚠️ HITBOX: +400% (patch 1.0.4)',
+            '⚠️ STAMINA: DRAINS IN 10s',
+            '⚠️ 1-PECK KO BY PIGEON',
+            '⚠️ WINGS AUDIBLE GLOBALLY',
+            '⚠️ NECTAR METER: MANDATORY',
+            '⚠️ STILL SOMEHOW BROKEN',
+        ];
+
+        let gameState = 'menu';
+        let currentLevel = 0;
         let playerMeter = 0, aiMeter = 0;
-        let playerHP = 50, aiHP = 45; // HARDER: More HP
-        let combo = 0, score = 0, taps = 0, highScore = 0;
+        let playerHP = 0, playerMaxHP = 50;
+        let aiHP = 0, aiMaxHP = 0;
+        let combo = 0, score = 0, totalScore = 0, taps = 0;
         let peckAnim = 0, flashAnim = 0;
         let lastTap = 0;
         let frame = 0;
-        let dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+        let shakeX = 0, shakeY = 0;
+        let patchScrollY = 0;
+        let dodoWarningTimer = 0;
+        let hudGlitch = 0;
+        let nerfAlertTimer = 0, nerfAlertText = '';
+        let transitionTimer = 0;
+        let roundStartFrame = 0;
+        let gauntletWinStartFrame = 0;
+        let introStartFrame = 0;
+        let prebattleStartFrame = 0;
 
-        // Load high score
-        if (localStorage.getItem('birdpeck_hs_' + dateStr)) {
-            highScore = parseInt(localStorage.getItem('birdpeck_hs_' + dateStr));
+        let fakeHudValues = { wingDrag:0, beakSharp:0, momentum:0, peckSync:0 };
+
+        function currentBird() { return BIRDS[currentLevel]; }
+
+        function drawPixelBird(x, y, bird, facingLeft, lunge) {
+            const s = 1.2 * (bird.size || 1);
+            ctx.save();
+            ctx.translate(x, y);
+            if (facingLeft) ctx.scale(-1, 1);
+            if (lunge > 0) ctx.translate(14*s, 0);
+            ctx.fillStyle = bird.color;
+            ctx.fillRect(-10*s, -7*s, 20*s, 14*s);
+            ctx.fillStyle = bird.accent;
+            ctx.fillRect(-5*s, -3*s, 12*s, 8*s);
+            ctx.fillStyle = bird.color;
+            ctx.fillRect(6*s, -9*s, 9*s, 9*s);
+            ctx.fillStyle = '#ffaa00';
+            ctx.fillRect(14*s, -4*s, 8*s, 4*s);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(9*s, -7*s, 3*s, 3*s);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(10*s, -6*s, 2*s, 2*s);
+            ctx.fillStyle = bird.accent;
+            ctx.fillRect(-12*s, -2*s, 5*s, 4*s);
+
+            if (bird.name === 'FLAMINGO') {
+                ctx.fillStyle = '#ff69b4';
+                ctx.fillRect(-2*s, 7*s, 3*s, 18*s);
+                ctx.fillRect(4*s, 7*s, 3*s, 18*s);
+            }
+            if (bird.name === 'PENGUIN') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-6*s, -2*s, 12*s, 8*s);
+            }
+            if (bird.name === 'OWL') {
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(7*s, -8*s, 5*s, 5*s);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(9*s, -7*s, 3*s, 3*s);
+            }
+            if (bird.name === 'EAGLE') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(6*s, -12*s, 9*s, 4*s);
+            }
+            if (bird.name === 'HUMMINGBIRD') {
+                ctx.fillStyle = '#001100';
+                ctx.fillRect(-12*s, -9*s, 30*s, 20*s);
+                ctx.fillStyle = bird.color;
+                ctx.fillRect(-5*s, -4*s, 10*s, 8*s);
+                ctx.fillStyle = bird.accent;
+                ctx.fillRect(3*s, -5*s, 5*s, 5*s);
+                ctx.fillStyle = '#ff8800';
+                ctx.fillRect(7*s, -3*s, 9*s, 2*s);
+                ctx.fillStyle = '#fff'; ctx.fillRect(4*s, -4*s, 2*s, 2*s);
+                ctx.fillStyle = '#000'; ctx.fillRect(5*s, -3*s, 1*s, 1*s);
+                ctx.fillStyle = 'rgba(0,204,136,0.3)';
+                for(let i=0;i<5;i++) ctx.fillRect(-8*s+Math.sin(frame*0.8+i)*3, -2*s+i*2, 6*s, 1*s);
+                if(frame%60 < 30) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(-8*s, -9*s, 4*s, 2*s);
+                }
+            }
+            if (bird.name === 'SHOEBILL') {
+                ctx.fillStyle = '#8899aa';
+                ctx.fillRect(10*s, -8*s, 14*s, 10*s);
+                ctx.fillStyle = '#667788';
+                ctx.fillRect(12*s, -6*s, 10*s, 6*s);
+            }
+            if (bird.name === 'DODO') {
+                ctx.fillStyle = bird.color;
+                ctx.fillRect(-14*s, -10*s, 28*s, 20*s);
+                ctx.fillStyle = '#ff6666';
+                ctx.fillRect(8*s, -12*s, 10*s, 10*s);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fillRect(16*s, -8*s, 10*s, 6*s);
+                if(frame%10<3) {
+                    ctx.fillStyle = `rgba(255,0,0,0.5)`;
+                    ctx.fillRect(-16*s+Math.random()*8, -12*s+Math.random()*8, 30*s, 2*s);
+                }
+            }
+            if (bird.name === 'OPIUM BIRD') {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(-14*s, -12*s, 30*s, 24*s);
+                ctx.fillStyle = bird.color;
+                ctx.fillRect(-10*s, -8*s, 22*s, 16*s);
+                ctx.fillStyle = '#ff00ff';
+                ctx.fillRect(2*s, -6*s, 6*s, 6*s);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(4*s, -4*s, 3*s, 3*s);
+                for(let i=0;i<8;i++){
+                    ctx.fillStyle = `hsla(${frame*3+i*45},100%,50%,0.3)`;
+                    ctx.fillRect(Math.sin(frame*0.05+i)*20*s, Math.cos(frame*0.07+i)*15*s, 4*s, 4*s);
+                }
+            }
+            ctx.restore();
         }
 
         function drawPigeon(x, y, lunge) {
-            const s = 1.1;
+            const s = 1.2;
             ctx.save(); ctx.translate(x, y);
-            if (lunge > 0) ctx.translate(12*s, 0);
-            ctx.fillStyle = '#888'; ctx.fillRect(-8*s, -6*s, 16*s, 12*s);
-            ctx.fillStyle = '#666'; ctx.fillRect(-3*s, -2*s, 10*s, 6*s);
-            ctx.fillStyle = '#aaa'; ctx.fillRect(5*s, -6*s, 7*s, 7*s);
-            ctx.fillStyle = '#ffaa00'; ctx.fillRect(11*s, -2*s, 7*s, 3*s);
-            ctx.fillStyle = '#fff'; ctx.fillRect(7*s, -4*s, 2*s, 2*s);
-            ctx.fillStyle = '#000'; ctx.fillRect(8*s, -3*s, 1*s, 1*s);
+            if (lunge > 0) ctx.translate(14*s, 0);
+            ctx.fillStyle = '#999'; ctx.fillRect(-10*s, -7*s, 20*s, 14*s);
+            ctx.fillStyle = '#777'; ctx.fillRect(-5*s, -3*s, 12*s, 8*s);
+            ctx.fillStyle = '#bbb'; ctx.fillRect(6*s, -9*s, 9*s, 9*s);
+            ctx.fillStyle = '#ffaa00'; ctx.fillRect(14*s, -4*s, 8*s, 4*s);
+            ctx.fillStyle = '#fff'; ctx.fillRect(9*s, -7*s, 3*s, 3*s);
+            ctx.fillStyle = '#000'; ctx.fillRect(10*s, -6*s, 2*s, 2*s);
+            ctx.fillStyle = `hsl(${frame*2%360},60%,40%)`;
+            ctx.fillRect(2*s, -1*s, 6*s, 4*s);
             ctx.restore();
         }
 
-        function drawHummer(x, y, lunge) {
-            const s = 1.0;
-            ctx.save(); ctx.translate(x, y);
-            if (lunge > 0) ctx.translate(-12*s, 0);
-            ctx.fillStyle = '#00cc88'; ctx.fillRect(-6*s, -5*s, 12*s, 10*s);
-            ctx.fillStyle = '#ff8800'; ctx.fillRect(-16*s, -2*s, 10*s, 4*s);
-            ctx.fillStyle = '#fff'; ctx.fillRect(-1*s, -3*s, 2*s, 2*s);
-            ctx.fillStyle = '#000'; ctx.fillRect(-0.5*s, -2*s, 1*s, 1*s);
-            ctx.fillStyle = '#009955'; ctx.fillRect(0*s, 0*s, 8*s, 5*s);
-            ctx.fillStyle = '#008844'; ctx.fillRect(2*s, 1*s, 5*s, 3*s);
-            ctx.fillStyle = '#006633'; ctx.fillRect(6*s, 2*s, 3*s, 3*s);
+        function updateFakeHud() {
+            fakeHudValues.wingDrag = (Math.sin(frame*0.02)*15 + 30 + combo*0.5).toFixed(1);
+            fakeHudValues.beakSharp = ['C','C+','B-','B','B+','A-','A','A+','S','S+','SS'][Math.min(combo, 10)];
+            fakeHudValues.momentum = Math.floor(Math.sin(frame*0.03)*50 + 50 + taps*0.1);
+            fakeHudValues.peckSync = (Math.cos(frame*0.015)*20 + 80).toFixed(1) + '%';
+        }
+
+        function drawFakeHud() {
+            ctx.fillStyle = 'rgba(0,20,0,0.85)';
+            ctx.fillRect(5, 75, 120, 78);
+            ctx.strokeStyle = '#00ff44'; ctx.lineWidth = 1;
+            ctx.strokeRect(5, 75, 120, 78);
+            ctx.fillStyle = '#00ff44'; ctx.font = '9px monospace'; ctx.textAlign = 'left';
+            ctx.fillText(`WING DRAG: ${fakeHudValues.wingDrag}`, 10, 88);
+            ctx.fillText(`BEAK: ${fakeHudValues.beakSharp}`, 10, 100);
+            ctx.fillText(`MOMENTUM: ${fakeHudValues.momentum}`, 10, 112);
+            ctx.fillText(`PECK SYNC: ${fakeHudValues.peckSync}`, 10, 124);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillText(`FEATHER: ${Math.floor(frame*0.3%99)+1}/99`, 10, 136);
+            ctx.fillText(`LOBBY: #${(frame*7%9999).toString().padStart(4,'0')}`, 10, 148);
+
+            const b = currentBird();
+            ctx.fillStyle = 'rgba(20,0,0,0.85)';
+            ctx.fillRect(W-125, 75, 120, 78);
+            ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 1;
+            ctx.strokeRect(W-125, 75, 120, 78);
+            ctx.fillStyle = '#ff8844'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+            const s = b.stats;
+            ctx.fillText(`DRAG: ${s.wingDrag}`, W-10, 88);
+            ctx.fillText(`BEAK: ${s.beakSharp}`, W-10, 100);
+            ctx.fillText(`DPS: ${s.peckDPS}`, W-10, 112);
+            ctx.fillText(`DENS: ${s.featherDens}`, W-10, 124);
+            const extraKey = Object.keys(s).find(k => !['wingDrag','beakSharp','featherDens','peckDPS'].includes(k));
+            if (extraKey) {
+                ctx.fillStyle = '#ff4444';
+                ctx.fillText(`${extraKey.toUpperCase()}: ${s[extraKey]}`, W-10, 136);
+            }
+            ctx.fillStyle = '#ff6666';
+            ctx.fillText(`TIER: ${b.tier}`, W-10, 148);
+        }
+
+        function drawNerfAlert() {
+            if (nerfAlertTimer > 0 && currentLevel === 5) {
+                const alpha = Math.min(nerfAlertTimer / 30, 1);
+                ctx.fillStyle = `rgba(255,0,0,${alpha * 0.3})`;
+                ctx.fillRect(0, 155, W, 28);
+                ctx.fillStyle = `rgba(255,255,0,${alpha})`;
+                ctx.font = 'bold 11px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(nerfAlertText, W/2, 173);
+                nerfAlertTimer--;
+            }
+        }
+
+        function drawTransition() {
+            const b = BIRDS[currentLevel];
+            ctx.fillStyle = '#002200';
+            ctx.fillRect(0,0,W,H);
+            ctx.fillStyle = '#00ff44'; ctx.font = 'bold 28px monospace'; ctx.textAlign='center';
+            ctx.fillText('PIGEON WINS!', W/2, 150);
+            ctx.fillStyle = b.color; ctx.font = 'bold 20px monospace';
+            ctx.fillText(`${b.name} DEFEATED`, W/2, 200);
+            ctx.fillStyle = '#ffff00'; ctx.font = '16px monospace';
+            ctx.fillText(b.winQuote, W/2, 250);
+            ctx.fillStyle = '#ffaa00'; ctx.font = 'bold 18px monospace';
+            ctx.fillText(`SCORE: +${score}`, W/2, 310);
+            if (currentLevel === 5) {
+                ctx.fillStyle = '#ff4444'; ctx.font = 'bold 14px monospace';
+                ctx.fillText('🎉 HUMMER FINALLY NERFED 🎉', W/2, 380);
+                ctx.fillStyle = '#ffaa00'; ctx.font = '11px monospace';
+                const ni = Math.floor(transitionTimer/45) % HUMMER_NERFS.length;
+                ctx.fillText(HUMMER_NERFS[ni], W/2, 400);
+            }
+            ctx.fillStyle = '#888'; ctx.font = '12px monospace';
+            const readyText = transitionTimer > 90 ? 'READY?' : `PREPARING... ${Math.ceil((90-transitionTimer)/30)}`;
+            ctx.fillText(readyText, W/2, H-50);
+        }
+
+        function drawMenu() {
+            ctx.fillStyle = '#001100';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 28px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('🕹️ BIRD GAME 3 🕹️', W/2, 60);
+            ctx.font = 'bold 32px monospace'; ctx.fillStyle = '#ff4444';
+            ctx.fillText('PECK GAUNTLET', W/2, 100);
+            ctx.font = '14px monospace'; ctx.fillStyle = '#00ff88';
+            ctx.fillText('YOU ARE PIGEON. DEFEAT ALL BIRDS.', W/2, 130);
+            ctx.fillStyle = '#ffaa00'; ctx.font = '12px monospace';
+            ctx.fillText(`9 ROUNDS | ${BIRDS.map(b=>b.emoji).join(' ')}`, W/2, 150);
+            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 16px monospace';
+            ctx.fillText(`ROUND ${currentLevel+1}: ${currentBird().name}`, W/2, 185);
+            ctx.fillStyle = currentBird().color;
+            ctx.font = '14px monospace';
+            ctx.fillText(`[ ${currentBird().tier} ]`, W/2, 205);
+            ctx.font = '11px monospace'; ctx.textAlign = 'left';
+            for (let i = 0; i < BIRDS.length; i++) {
+                const y = 230 + i * 18;
+                const beaten = i < currentLevel;
+                const current = i === currentLevel;
+                ctx.fillStyle = beaten ? '#006600' : (current ? '#ffff00' : '#333333');
+                ctx.fillText(`${beaten ? '✓' : current ? '►' : ' '} ${BIRDS[i].emoji} ${BIRDS[i].name}`, 30, y);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = beaten ? '#004400' : (current ? '#ffaa00' : '#222222');
+                ctx.fillText(BIRDS[i].tier, W-30, y);
+                ctx.textAlign = 'left';
+            }
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(10, H-140, W-20, 60);
+            ctx.strokeStyle = '#444'; ctx.strokeRect(10, H-140, W-20, 60);
+            ctx.save();
+            ctx.beginPath(); ctx.rect(10, H-140, W-20, 60); ctx.clip();
+            ctx.fillStyle = '#00ff44'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+            for (let i = 0; i < PATCH_NOTES.length; i++) {
+                const y = H - 130 + i * 14 - patchScrollY;
+                if (y > H-145 && y < H-75) {
+                    ctx.fillText(PATCH_NOTES[i], W/2, y);
+                }
+            }
             ctx.restore();
+            ctx.fillStyle = frame%40<20 ? '#00ff88' : '#004422';
+            ctx.font = 'bold 20px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('TAP TO FIGHT', W/2, H-60);
+            ctx.fillStyle = '#ffff00'; ctx.font = '14px monospace';
+            ctx.fillText(`TOTAL SCORE: ${totalScore}`, W/2, H-30);
+        }
+
+        function drawBirdIntro() {
+            const b = currentBird();
+            const introFrames = frame - introStartFrame;
+            const canContinue = introFrames > 75;
+
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#000');
+            bg.addColorStop(1, '#001100');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            for (let i = 0; i < 24; i++) {
+                ctx.fillStyle = `hsla(${(frame * 2 + i * 15) % 360},100%,60%,0.25)`;
+                ctx.fillRect((i * 17 + frame * 2) % (W + 20) - 10, (i * 29) % H, 3, 3);
+            }
+
+            ctx.fillStyle = '#ffff00';
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`INCOMING OPPONENT ${currentLevel + 1}/9`, W / 2, 80);
+
+            drawPixelBird(W / 2, 250, b, true, 0);
+
+            ctx.fillStyle = b.color;
+            ctx.font = 'bold 30px monospace';
+            ctx.fillText(b.name, W / 2, 340);
+            ctx.fillStyle = '#ff8844';
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText(`[ ${b.tier} ]`, W / 2, 365);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px monospace';
+            ctx.fillText(`HP ${b.hp}  |  SPD ${b.speed.toFixed(2)}  |  DMG ${b.dmg.toFixed(1)}`, W / 2, 400);
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText(`"${b.taunt}"`, W / 2, 430);
+
+            if (canContinue) {
+                ctx.fillStyle = frame % 30 < 15 ? '#00ff88' : '#004422';
+                ctx.font = 'bold 18px monospace';
+                ctx.fillText('TAP TO CONTINUE', W / 2, 545);
+            } else {
+                ctx.fillStyle = '#888';
+                ctx.font = 'bold 12px monospace';
+                ctx.fillText(`LOCKED ${Math.ceil((75 - introFrames) / 60)}...`, W / 2, 545);
+            }
+        }
+
+        function drawPreBattle() {
+            const b = currentBird();
+            const prebattleFrames = frame - prebattleStartFrame;
+            const canStart = prebattleFrames > 45;
+            ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+            const t = frame % 120;
+            if (t < 60) {
+                ctx.fillStyle = `rgba(${b.color},0.1)`;
+                ctx.fillRect(0,0,W,H);
+            }
+            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'center';
+            ctx.fillText(`ROUND ${currentLevel+1}`, W/2, 100);
+            ctx.font = 'bold 36px monospace'; ctx.fillStyle = '#ffffff';
+            ctx.fillText('VS', W/2, 200);
+            drawPigeon(W/2 - 80, 300, 0);
+            ctx.fillStyle = '#00ff44'; ctx.font = 'bold 16px monospace';
+            ctx.fillText('PIGEON', W/2 - 80, 350);
+            drawPixelBird(W/2 + 80, 300, b, true, 0);
+            ctx.fillStyle = b.color; ctx.font = 'bold 16px monospace';
+            ctx.fillText(b.name, W/2 + 80, 350);
+            ctx.font = '12px monospace'; ctx.fillStyle = '#ff8844';
+            ctx.fillText(b.tier, W/2 + 80, 368);
+            ctx.fillStyle = '#ff4444'; ctx.font = 'bold 14px monospace';
+            ctx.fillText(`"${b.taunt}"`, W/2, 420);
+            if (currentLevel === 5) {
+                ctx.fillStyle = 'rgba(255,0,0,0.2)'; ctx.fillRect(0,440,W,60);
+                ctx.fillStyle = '#ff4444'; ctx.font = 'bold 12px monospace';
+                ctx.fillText('⚠️ HUMMINGBIRD NERFED IN v3.46 ⚠️', W/2, 458);
+                ctx.fillStyle = '#ffaa00'; ctx.font = '10px monospace';
+                ctx.fillText('HITBOX +400% | STAMINA DRAIN | NECTAR REQUIRED', W/2, 474);
+                ctx.fillText('STILL SOMEHOW S-TIER???', W/2, 488);
+            }
+            if (canStart && frame % 30 < 15) {
+                ctx.fillStyle = '#00ff88'; ctx.font = 'bold 18px monospace';
+                ctx.fillText('TAP TO START', W/2, 540);
+            } else if (!canStart) {
+                ctx.fillStyle = '#888';
+                ctx.font = 'bold 12px monospace';
+                ctx.fillText(`GET READY ${Math.ceil((45 - prebattleFrames) / 60)}...`, W/2, 540);
+            }
+        }
+
+        function drawDodoWarning() {
+            ctx.fillStyle = '#110000'; ctx.fillRect(0,0,W,H);
+            if (frame%10<5) {
+                ctx.fillStyle = 'rgba(255,0,0,0.3)'; ctx.fillRect(0,0,W,H);
+            }
+            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 28px monospace'; ctx.textAlign='center';
+            ctx.fillText('⚠️ WARNING ⚠️', W/2, 150);
+            ctx.font = 'bold 22px monospace'; ctx.fillStyle = '#ff4444';
+            ctx.fillText('DODO DETECTED', W/2, 200);
+            ctx.fillText('IN YOUR LOBBY', W/2, 235);
+            ctx.font = '16px monospace'; ctx.fillStyle = '#ff8888';
+            ctx.fillText('RECOMMENDED ACTION:', W/2, 300);
+            ctx.font = 'bold 24px monospace'; ctx.fillStyle = '#ffffff';
+            ctx.fillText('LEAVE IMMEDIATELY', W/2, 340);
+            ctx.font = '14px monospace'; ctx.fillStyle = '#ff6666';
+            ctx.fillText(`AUTO-QUIT IN ${Math.ceil((180-dodoWarningTimer)/60)}...`, W/2, 400);
+            ctx.fillStyle = frame%20<10 ? '#ffff00' : '#000';
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText('TAP TO FIGHT ANYWAY', W/2, 460);
+            ctx.fillStyle = '#ff0000'; ctx.font = '10px monospace';
+            ctx.fillText('(NOT RECOMMENDED)', W/2, 480);
+        }
+
+        function drawLose() {
+            const b = currentBird();
+            ctx.fillStyle = '#220000'; ctx.fillRect(0,0,W,H);
+            ctx.fillStyle = '#ff4444'; ctx.font = 'bold 36px monospace'; ctx.textAlign='center';
+            ctx.fillText(`${b.name} WINS!`, W/2, 150);
+            ctx.fillStyle = '#ff8844'; ctx.font = '20px monospace';
+            ctx.fillText(`"${b.taunt}"`, W/2, 200);
+            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 20px monospace';
+            ctx.fillText(`SCORE: ${score}`, W/2, 270);
+            const insults = ['GIT GUD','SKILL ISSUE','PIGEON DIFF','UNINSTALL','TOUCH GRASS','PECK HARDER','L + RATIO'];
+            ctx.fillStyle = '#ff6644'; ctx.font = 'bold 18px monospace';
+            ctx.fillText(insults[Math.floor(frame/60)%insults.length], W/2, 340);
+            if (currentLevel === 5) {
+                ctx.fillStyle = '#ff0000'; ctx.font = '14px monospace';
+                ctx.fillText('LOST TO NERFED HUMMER 💀', W/2, 390);
+            }
+            if (currentLevel >= 7) {
+                ctx.fillStyle = '#ff0000'; ctx.font = '14px monospace';
+                ctx.fillText('WE WARNED YOU', W/2, 390);
+            }
+            ctx.fillStyle = frame%30<15 ? '#00ff88' : '#004422';
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText('TAP TO RETRY', W/2, 470);
+            ctx.fillStyle = '#666'; ctx.font = '12px monospace';
+            ctx.fillText('(SAME ROUND)', W/2, 492);
+        }
+
+        function drawGauntletWin() {
+            const endFrames = frame - gauntletWinStartFrame;
+            const canRestart = endFrames > 120;
+            const pulse = (Math.sin(frame * 0.06) + 1) / 2;
+            const titleGlow = 0.25 + pulse * 0.45;
+            const scoreRank = totalScore >= 1600 ? 'S++' : totalScore >= 1300 ? 'S+' : totalScore >= 1000 ? 'S' : totalScore >= 700 ? 'A' : 'B';
+            const apm = Math.max(1, Math.floor((taps / Math.max(frame, 1)) * 3600));
+
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, `hsl(${(frame * 0.4) % 360}, 70%, 9%)`);
+            bg.addColorStop(1, '#050008');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            for (let i = 0; i < 6; i++) {
+                const r = 45 + i * 34 + (frame % 34);
+                ctx.strokeStyle = `hsla(${(frame * 2 + i * 60) % 360},100%,60%,0.22)`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(W / 2, 120, r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < 120; i++) {
+                ctx.fillStyle = `hsla(${(i * 7 + frame * 3) % 360},100%,65%,0.9)`;
+                ctx.fillRect(
+                    Math.sin(frame * 0.05 + i * 0.7) * (W / 2 + 15) + W / 2,
+                    (i * 7 + frame * 1.8) % H,
+                    4,
+                    4
+                );
+            }
+
+            ctx.fillStyle = `rgba(255,255,120,${titleGlow})`;
+            ctx.fillRect(0, 70, W, 70);
+            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 30px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('🏆 GAUNTLET COMPLETE 🏆', W / 2, 115);
+            ctx.fillStyle = '#00ff44'; ctx.font = 'bold 21px monospace';
+            ctx.fillText('PIGEON ASCENDED TO PATCH NOTES', W / 2, 148);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.72)';
+            ctx.fillRect(24, 168, W - 48, 142);
+            ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2;
+            ctx.strokeRect(24, 168, W - 48, 142);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'left';
+            ctx.fillText(`TOTAL SCORE : ${totalScore}`, 36, 195);
+            ctx.fillText(`LOBBY RANK  : ${scoreRank}`, 36, 217);
+            ctx.fillText(`TAPS/MIN    : ${apm}`, 36, 239);
+            ctx.fillText(`FINAL VERDICT: PIGEON META`, 36, 261);
+            ctx.fillStyle = '#ff66ff';
+            ctx.fillText('BIRD COUNCIL STATUS: CLEARED', 36, 283);
+
+            drawPigeon(W / 2 - 90, 350 + Math.sin(frame * 0.08) * 4, 18);
+            drawPixelBird(W / 2 + 90, 350 + Math.cos(frame * 0.06) * 4, BIRDS[BIRDS.length - 1], true, 0);
+            ctx.fillStyle = '#00ff88'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('CHAMPION', W / 2 - 90, 390);
+            ctx.fillStyle = '#cc66ff';
+            ctx.fillText('FINAL BOSS', W / 2 + 90, 390);
+
+            ctx.font = '11px monospace';
+            for (let i = 0; i < BIRDS.length; i++) {
+                ctx.fillStyle = BIRDS[i].color;
+                const col = i < 5 ? 0 : 1;
+                const row = i < 5 ? i : i - 5;
+                ctx.fillText(`${BIRDS[i].emoji} ${BIRDS[i].name} ✓`, 84 + col * 176, 425 + row * 20);
+            }
+
+            ctx.fillStyle = '#ff4444'; ctx.font = 'bold 13px monospace';
+            ctx.fillText('HUMMINGBIRD NERFED INTO OBLIVION', W / 2, 542);
+            ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 15px monospace';
+            ctx.fillText('PIGEON MAINS RISE UP', W / 2, 565);
+            if (canRestart) {
+                ctx.fillStyle = frame % 30 < 15 ? '#00ff88' : '#004422';
+                ctx.font = 'bold 16px monospace';
+                ctx.fillText('TAP TO RESTART', W / 2, 596);
+            } else {
+                ctx.fillStyle = '#888';
+                ctx.font = 'bold 12px monospace';
+                ctx.fillText(`VICTORY SCREEN LOCKED ${Math.ceil((120 - endFrames) / 60)}...`, W / 2, 596);
+            }
         }
 
         function draw() {
+            ctx.save();
+            if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, W, H);
 
-            if (gameState === 'menu') {
-                ctx.fillStyle = '#002200';
-                ctx.fillRect(0, 0, W, H);
-                ctx.fillStyle = '#ffff00';
-                ctx.font = 'bold 32px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('🕹️ BIRD GAME 2 🕹️', W/2, 120);
-                ctx.font = 'bold 36px monospace';
-                ctx.fillStyle = '#ffaa00';
-                ctx.fillText('PECK DUEL', W/2, 190);
-                ctx.font = 'bold 28px monospace';
-                ctx.fillStyle = '#ffff00';
-                ctx.fillText('HARD MODE', W/2, 240);
-                ctx.font = '24px monospace';
-                ctx.fillStyle = '#00ff88';
-                ctx.fillText('TAP TO START', W/2, 300);
-                ctx.fillText('SPAM FASTER', W/2, 340);
-                ctx.fillStyle = '#ff4444';
-                ctx.fillText('NERF HUMMER', W/2, 400);
-                ctx.fillStyle = '#00ff00';
-                ctx.font = '20px monospace';
-                ctx.fillText(`BEST: ${highScore} | ${dateStr}`, W/2, 460);
-                ctx.textAlign = 'left';
-                return;
-            }
+            if (gameState === 'menu') { drawMenu(); ctx.restore(); return; }
+            if (gameState === 'intro') { drawBirdIntro(); ctx.restore(); return; }
+            if (gameState === 'prebattle') { drawPreBattle(); ctx.restore(); return; }
+            if (gameState === 'dodowarning') { drawDodoWarning(); ctx.restore(); return; }
+            if (gameState === 'transition') { drawTransition(); ctx.restore(); return; }
+            if (gameState === 'lose') { drawLose(); ctx.restore(); return; }
+            if (gameState === 'gauntletwin') { drawGauntletWin(); ctx.restore(); return; }
 
-            if (gameState === 'win') {
-                // WIN PAGE - FULL MEME
-                ctx.fillStyle = '#004400';
-                ctx.fillRect(0, 0, W, H);
-                // Confetti effect
-                for (let i=0; i<50; i++) {
-                    ctx.fillStyle = `hsl(${i*7}, 100%, 60%)`;
-                    ctx.fillRect(Math.sin(frame*0.1 + i)*50 + W/2, i*8, 4, 4);
-                }
-                ctx.fillStyle = '#00ff44';
-                ctx.font = 'bold 44px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('PIGEON WINS!', W/2, 160);
-                ctx.font = 'bold 32px monospace';
-                ctx.fillStyle = '#ffff00';
-                ctx.fillText(`SCORE: ${score}`, W/2, 230);
-                ctx.fillStyle = '#ffaa00';
-                ctx.font = 'bold 28px monospace';
-                ctx.fillText(`NEW BEST: ${highScore}`, W/2, 280);
-                ctx.font = 'bold 24px monospace';
-                ctx.fillStyle = '#00ff88';
-                ctx.fillText('HUMMER NERFED!', W/2, 340);
-                ctx.fillStyle = '#ff4444';
-                ctx.fillText('PIGEON META', W/2, 390);
-                ctx.font = 'bold 22px monospace';
-                ctx.fillStyle = '#ffff00';
-                ctx.fillText('TAP TO PLAY AGAIN', W/2, 460);
-                ctx.textAlign = 'left';
-                // Save HS
-                if (score > highScore) {
-                    highScore = score;
-                    localStorage.setItem('birdpeck_hs_' + dateStr, highScore);
-                }
-                return;
-            }
-
-            if (gameState === 'lose') {
-                ctx.fillStyle = '#220000';
-                ctx.fillRect(0, 0, W, H);
-                ctx.fillStyle = '#ff4444';
-                ctx.font = 'bold 44px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('HUMMER WINS!', W/2, 200);
-                ctx.font = 'bold 28px monospace';
-                ctx.fillStyle = '#ffff00';
-                ctx.fillText(`SCORE: ${score}`, W/2, 280);
-                ctx.font = '24px monospace';
-                ctx.fillStyle = '#ffaa00';
-                ctx.fillText('GIT GUD', W/2, 340);
-                ctx.fillStyle = '#00ff00';
-                ctx.fillText('TAP RETRY', W/2, 410);
-                ctx.textAlign = 'left';
-                return;
-            }
-
-            // PLAYING
+            const b = currentBird();
             const grad = ctx.createLinearGradient(0,0,0,H);
             grad.addColorStop(0,'#002200'); grad.addColorStop(1,'#000000');
             ctx.fillStyle = grad;
             ctx.fillRect(0,0,W,H);
 
-            // Scanlines
-            ctx.strokeStyle = 'rgba(0,20,0,0.3)'; ctx.lineWidth=1;
+            ctx.strokeStyle = 'rgba(0,20,0,0.2)'; ctx.lineWidth=1;
             for(let i=1; i<110; i++) {
                 ctx.beginPath(); ctx.moveTo(0,i*5.8); ctx.lineTo(W,i*5.8); ctx.stroke();
             }
 
-            // HP BARS
-            ctx.fillStyle = 'rgba(0,0,0,0.8)';
-            ctx.fillRect(10,25,170,45); ctx.fillRect(W-180,25,170,45);
-            ctx.fillStyle = '#00ff44'; ctx.fillRect(15,30,(playerHP/50)*160,35);
-            ctx.fillStyle = '#ff8844'; ctx.fillRect(W-175,30,(aiHP/45)*160,35);
-            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px monospace'; ctx.textAlign='left';
-            ctx.fillText(`PIGEON ${Math.ceil(playerHP)}/50`,20,55);
-            ctx.fillText(`HUMMER ${Math.ceil(aiHP)}/45`,W-165,55);
+            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+            ctx.fillText(`ROUND ${currentLevel+1}/9 — ${b.emoji} ${b.name} ${b.emoji}`, W/2, 16);
 
-            // BIRDS
-            drawPigeon(85 + peckAnim*2.5, 310, peckAnim>0 ? 25:0);
-            drawHummer(W-85 + peckAnim*-2.5, 310, peckAnim<0 ? 25:0);
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.fillRect(10,22,165,48); ctx.fillRect(W-175,22,165,48);
+            const phpPct = Math.max(0, playerHP / playerMaxHP);
+            ctx.fillStyle = phpPct > 0.3 ? '#00ff44' : (frame%10<5 ? '#ff0000' : '#ff4444');
+            ctx.fillRect(15,28, phpPct*155, 18);
+            ctx.strokeStyle = '#00ff44'; ctx.strokeRect(15,28,155,18);
+            const ahpPct = Math.max(0, aiHP / aiMaxHP);
+            ctx.fillStyle = ahpPct > 0.3 ? '#ff8844' : (frame%10<5 ? '#ff0000' : '#ff4444');
+            ctx.fillRect(W-170,28, ahpPct*155, 18);
+            ctx.strokeStyle = '#ff8844'; ctx.strokeRect(W-170,28,155,18);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.textAlign='left';
+            ctx.fillText(`🐦 PIGEON`, 15, 60);
+            ctx.fillStyle = '#aaaaaa'; ctx.font = '11px monospace';
+            ctx.fillText(`${Math.ceil(playerHP)}/${playerMaxHP}`, 15, 73);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace';
+            ctx.fillText(`${b.name} ${b.emoji}`, W-165, 60);
+            ctx.fillStyle = '#aaaaaa'; ctx.font = '11px monospace';
+            ctx.fillText(`${Math.ceil(aiHP)}/${aiMaxHP}`, W-165, 73);
 
-            // METER
-            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(10,H-105,W-20,70);
-            ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-98,(playerMeter/10)*(W-40),18);
-            ctx.fillStyle = '#ff8844'; ctx.fillRect(20,H-76,(aiMeter/10)*(W-40),18);
-            ctx.fillStyle = '#ffff00'; ctx.font='bold 24px monospace'; ctx.textAlign='center';
-            ctx.fillText('PECK METER',W/2, H-50);
+            drawFakeHud();
+            drawPigeon(85 + peckAnim*2.5, 320, peckAnim>0 ? 25:0);
+            drawPixelBird(W-85 + peckAnim*-2.5, 320, b, true, peckAnim<0 ? 25:0);
 
-            // STATS
-            ctx.textAlign='left'; ctx.fillStyle='#00ff88'; ctx.font='bold 20px monospace';
-            ctx.fillText(`TAPS:${taps} COMBO:${combo} SCORE:${score}`,15,H-25);
+            if (currentLevel === 5) {
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(W-130, 340, 80, 16);
+                const nectar = Math.max(0, Math.sin(frame*0.02)*50+50);
+                ctx.fillStyle = nectar < 25 ? '#ff0000' : '#ff8800';
+                ctx.fillRect(W-128, 342, nectar*0.76, 12);
+                ctx.fillStyle = '#ffff00'; ctx.font = '8px monospace'; ctx.textAlign='center';
+                ctx.fillText('NECTAR', W-90, 350);
+                if(frame%40 < 20) {
+                    ctx.fillStyle = '#ff4444'; ctx.font = '9px monospace';
+                    ctx.fillText('🔊 BZZZZ', W-85, 370);
+                }
+                ctx.fillStyle = 'rgba(255,100,0,0.15)';
+                if(frame%120 < 15) ctx.fillRect(W-160, 280, 140, 80);
+            }
 
-            // FLASHES
-            if(flashAnim>0){ ctx.fillStyle=`rgba(0,255,0,${flashAnim})`; ctx.fillRect(0,0,W,H); }
-            if(peckAnim>0){ ctx.fillStyle='rgba(0,255,100,0.25)'; ctx.fillRect(0,0,W,H); }
-            if(peckAnim<0){ ctx.fillStyle='rgba(255,100,0,0.3)'; ctx.fillRect(0,0,W,H); }
+            ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
+            ctx.strokeStyle = '#ffff00'; ctx.strokeRect(10,H-108,W-20,75);
+            ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-100,(playerMeter/10)*(W-40),16);
+            ctx.strokeStyle = '#006622'; ctx.strokeRect(20,H-100,(W-40),16);
+            ctx.fillStyle = '#00ff44'; ctx.font = '9px monospace'; ctx.textAlign='left';
+            ctx.fillText('YOU', 22, H-88);
+            ctx.fillStyle = b.color; ctx.fillRect(20,H-80,(aiMeter/10)*(W-40),16);
+            ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-80,(W-40),16);
+            ctx.fillStyle = b.color; ctx.font = '9px monospace';
+            ctx.fillText(b.name, 22, H-68);
+            ctx.fillStyle = '#ffff00'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
+            ctx.fillText('⚔️ PECK METER ⚔️', W/2, H-46);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,H-30,W,30);
+            ctx.textAlign='left'; ctx.fillStyle='#00ff88'; ctx.font='bold 12px monospace';
+            ctx.fillText(`TAPS:${taps}`, 10, H-12);
+            ctx.fillText(`COMBO:${combo}`, 100, H-12);
+            ctx.textAlign='right'; ctx.fillStyle='#ffff00';
+            ctx.fillText(`SCORE:${score}`, W-10, H-12);
+
+            drawNerfAlert();
+
+            if(flashAnim>0){ ctx.fillStyle=`rgba(0,255,0,${flashAnim*0.4})`; ctx.fillRect(0,0,W,H); }
+            if(peckAnim>0){ ctx.fillStyle='rgba(0,255,100,0.15)'; ctx.fillRect(0,0,W,H); }
+            if(peckAnim<0){ ctx.fillStyle='rgba(255,100,0,0.2)'; ctx.fillRect(0,0,W,H); }
+
+            if (currentLevel >= 7 && hudGlitch > 0) {
+                ctx.fillStyle = `rgba(255,0,255,${hudGlitch*0.3})`;
+                ctx.fillRect(0, Math.random()*H, W, 3);
+                ctx.fillRect(0, Math.random()*H, W, 2);
+                hudGlitch *= 0.95;
+            }
+            ctx.restore();
         }
 
         function update() {
-            if(gameState !== 'playing') return;
+            patchScrollY = (patchScrollY + 0.3) % (PATCH_NOTES.length * 14);
+            shakeX *= 0.9; shakeY *= 0.9;
 
-            // AI HARDER: Faster peck
-            aiMeter += 0.11; // UP from 0.07
-            if(aiMeter >=10){
-                aiMeter=0;
-                playerHP -= 2; // More dmg
+            if (gameState === 'dodowarning') {
+                dodoWarningTimer++;
+                if (dodoWarningTimer >= 180) { startRound(); }
+                return;
+            }
+
+            if (gameState === 'transition') {
+                transitionTimer++;
+                return;
+            }
+
+            if (gameState !== 'playing') return;
+
+            const b = currentBird();
+            updateFakeHud();
+
+            aiMeter += b.speed;
+            if (aiMeter >= 10) {
+                aiMeter = 0;
+                playerHP -= b.dmg;
                 peckAnim = -35;
-                combo=0;
-                flashAnim=0.6;
-                score = Math.max(0,score-5);
-                console.log('🤬 HUMMER PECK! Pigeon:',playerHP);
+                combo = Math.max(0, combo - 2);
+                flashAnim = 0.8;
+                score = Math.max(0, score - 3);
+                shakeX = (Math.random()-0.5)*8;
+                shakeY = (Math.random()-0.5)*8;
+                hudGlitch = 1;
+
+                if (currentLevel === 5 && Math.random() < 0.4) {
+                    nerfAlertText = HUMMER_NERFS[Math.floor(Math.random()*HUMMER_NERFS.length)];
+                    nerfAlertTimer = 60;
+                }
             }
 
-            if(aiHP <=0){ gameState='win'; console.log('🏆 PIGEON WINS! Score:',score); return; }
-            if(playerHP <=0){ gameState='lose'; console.log('💀 LOSE. Score:',score); return; }
+            if (aiHP <= 0) {
+                gameState = 'transition';
+                totalScore += score;
+                transitionTimer = 0;
+                return;
+            }
+            if (playerHP <= 0) {
+                gameState = 'lose';
+                return;
+            }
 
-            peckAnim *=0.91; flashAnim*=0.88;
-            if(Math.abs(peckAnim)<1) peckAnim=0;
+            peckAnim *= 0.91;
+            flashAnim *= 0.88;
+            if (Math.abs(peckAnim) < 1) peckAnim = 0;
         }
 
-        function startGame(){
-            gameState='playing';
-            playerMeter=aiMeter=0;
-            playerHP=50; aiHP=45;
-            combo=taps=0; peckAnim=0; score=0;
-            console.log('🔥 HARD DUEL START');
+        function startRound() {
+            const b = currentBird();
+            gameState = 'playing';
+            playerMeter = 0; aiMeter = 0;
+            playerHP = playerMaxHP;
+            aiHP = b.hp; aiMaxHP = b.hp;
+            combo = 0; taps = 0; score = 0; peckAnim = 0; flashAnim = 0;
+            hudGlitch = 0; nerfAlertTimer = 0;
+            roundStartFrame = frame;
         }
 
-        function handleTap(e){
+        function handleTap(e) {
             e.preventDefault();
+
+            if (gameState === 'menu') {
+                gameState = 'intro';
+                introStartFrame = frame;
+                return;
+            }
+
+            if (gameState === 'intro') {
+                if (frame - introStartFrame <= 75) {
+                    return;
+                }
+                if (currentLevel === 7) {
+                    gameState = 'dodowarning';
+                    dodoWarningTimer = 0;
+                } else {
+                    gameState = 'prebattle';
+                    prebattleStartFrame = frame;
+                }
+                return;
+            }
+
+            if (gameState === 'prebattle') {
+                if (frame - prebattleStartFrame <= 45) {
+                    return;
+                }
+                startRound();
+                return;
+            }
+
+            if (gameState === 'dodowarning') {
+                startRound();
+                return;
+            }
+
+            if (gameState === 'transition') {
+                currentLevel++;
+                if (currentLevel >= BIRDS.length) {
+                    gameState = 'gauntletwin';
+                    gauntletWinStartFrame = frame;
+                } else {
+                    gameState = 'menu';
+                }
+                return;
+            }
+
+            if (gameState === 'lose') {
+                gameState = 'menu';
+                return;
+            }
+
+            if (gameState === 'gauntletwin') {
+                if (frame - gauntletWinStartFrame <= 120) {
+                    return;
+                }
+                currentLevel = 0;
+                totalScore = 0;
+                gameState = 'menu';
+                return;
+            }
+
+            const framesSinceStart = frame - roundStartFrame;
+            const canDamage = framesSinceStart > 30;
+            
             taps++;
-            console.log('TAP',taps);
-
-            if(gameState==='menu') return startGame();
-            if(gameState==='win' || gameState==='lose'){ gameState='menu'; return; }
-
-            // PLAYER: Slightly nerfed charge
             const now = Date.now();
-            if(now - lastTap <200) combo = Math.min(combo+1,25);
-            else combo=1;
-            lastTap=now;
-            playerMeter +=1.4 + (combo*0.12); // DOWN from 1.8
-            flashAnim=0.8;
+            if (now - lastTap < 200) combo = Math.min(combo + 1, 30);
+            else combo = 1;
+            lastTap = now;
+            flashAnim = 0.6;
 
-            if(playerMeter >=10){
-                playerMeter -=10;
-                aiHP -=1.2 + (combo/4); // Balanced dmg
-                peckAnim=35;
-                score +=25 + combo*4;
-                console.log('🦤 PECK! Hummer:',aiHP);
+            playerMeter += 1.3 + (combo * 0.1);
+
+            if (playerMeter >= 10 && canDamage) {
+                playerMeter -= 10;
+                const dmg = 1.5 + (combo / 5);
+                aiHP -= dmg;
+                peckAnim = 35;
+                score += 20 + combo * 3;
+                shakeX = (Math.random()-0.5)*4;
+                shakeY = (Math.random()-0.5)*4;
             }
         }
 
-        // EVENTS
-        ['touchstart','click','pointerdown','mousedown'].forEach(ev=>
-            canvas.addEventListener(ev,handleTap,{passive:false})
+        ['touchstart','click','pointerdown','mousedown'].forEach(ev =>
+            canvas.addEventListener(ev, handleTap, {passive: false})
         );
 
-        function loop(){
+        function loop() {
             frame++;
             update();
             draw();
@@ -265,7 +836,7 @@
         }
 
         loop();
-        console.log('✅ HARD MODE READY - GREEN SCREEN!');
+        console.log('✅ BIRD GAME 3 PECK GAUNTLET READY');
     </script>
 </body>
 </html>
