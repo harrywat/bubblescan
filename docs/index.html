@@ -1308,6 +1308,9 @@
                     precTarget.y = Math.max(minY, Math.min(maxY, precTarget.y));
                 }
                 precTarget.flash = Math.max(0, precTarget.flash - 0.06);
+                // Gradually shrink target radius back toward minimum to maintain difficulty
+                const minR = Math.max(15, 30 - currentLevel * 1.6);
+                if (precTarget.r > minR) precTarget.r = Math.max(minR, precTarget.r - 0.04);
             } else if (fightStyle === 'RHYTHM') {
                 beatSpawnTimer++;
                 const interval = Math.max(20, 55 - currentLevel * 3);
@@ -1473,9 +1476,8 @@
                 const inZone1 = Math.abs(markerPos - sz1) < szHalf;
                 const inZone2 = Math.abs(markerPos - sz2) < szHalf;
                 const nearZone = Math.abs(markerPos - sz1) < szHalf * 2.2 || Math.abs(markerPos - sz2) < szHalf * 2.2;
-                const now2 = Date.now();
-                if (now2 - lastTap < 600) combo = Math.min(combo + 1, 30); else combo = 1;
-                lastTap = now2;
+                if (now - lastTap < 600) combo = Math.min(combo + 1, 30); else combo = 1;
+                lastTap = now;
                 if ((inZone1 || inZone2) && canDamage) {
                     const isPerfect = inZone2;
                     aiHP -= isPerfect ? (3.2 + combo * 0.18) : (1.8 + combo * 0.12);
@@ -1507,9 +1509,8 @@
                 if (dist <= precTarget.r && canDamage) {
                     const bullseye = dist <= precTarget.r * 0.42;
                     aiHP -= bullseye ? (2.8 + combo * 0.18) : (1.4 + combo * 0.1);
-                    const now2 = Date.now();
-                    if (now2 - lastTap < 500) combo = Math.min(combo + 1, 30); else combo = 1;
-                    lastTap = now2;
+                    if (now - lastTap < 500) combo = Math.min(combo + 1, 30); else combo = 1;
+                    lastTap = now;
                     playPrecisionHitSound(bullseye);
                     peckAnim = 35;
                     precTarget.flash = 1.0;
@@ -1530,7 +1531,7 @@
                 lastInputTime = now;
                 taps++;
                 const hitZoneX = 65;
-                let best = null, bestDist = 999;
+                let best = null, bestDist = Infinity;
                 for (const bt of beats) {
                     if (!bt.hit && !bt.miss) {
                         const d = Math.abs(bt.x - hitZoneX);
@@ -1540,9 +1541,8 @@
                 if (best && bestDist < 24) {
                     const perfect = bestDist < 9;
                     best.hit = true;
-                    const now2 = Date.now();
-                    if (now2 - lastTap < 700) combo = Math.min(combo + 1, 30); else combo = 1;
-                    lastTap = now2;
+                    if (now - lastTap < 700) combo = Math.min(combo + 1, 30); else combo = 1;
+                    lastTap = now;
                     if (canDamage) {
                         aiHP -= perfect ? (2.2 + combo * 0.14) : (1.1 + combo * 0.09);
                         peckAnim = 35;
