@@ -194,6 +194,7 @@
         let transitionTimer = 0;
         let roundStartFrame = 0;
         let gauntletWinStartFrame = 0;
+        let finalApm = 0;
         let introStartFrame = 0;
         let prebattleStartFrame = 0;
         let menuStartFrame = 0;
@@ -829,7 +830,7 @@
             const pulse = (Math.sin(frame * 0.06) + 1) / 2;
             const titleGlow = 0.25 + pulse * 0.45;
             const scoreRank = totalScore >= 1600 ? 'S++' : totalScore >= 1300 ? 'S+' : totalScore >= 1000 ? 'S' : totalScore >= 700 ? 'A' : 'B';
-            const apm = Math.max(1, Math.floor((taps / Math.max(frame, 1)) * 3600));
+            const apm = finalApm;
 
             const bg = ctx.createLinearGradient(0, 0, 0, H);
             bg.addColorStop(0, `hsl(${(frame * 0.4) % 360}, 70%, 9%)`);
@@ -1167,6 +1168,7 @@
                     playVictoryFanfare();
                     gameState = 'gauntletwin';
                     gauntletWinStartFrame = frame;
+                    finalApm = Math.max(1, Math.floor((taps / Math.max(frame, 1)) * 3600));
                 } else {
                     playLevelTransition();
                     gameState = 'menu';
