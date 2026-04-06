@@ -113,6 +113,37 @@
 
         let transitionSoundTimeout;
 
+        function playTimingHitSound(perfect) {
+            if (perfect) {
+                playTone(1000, 0.05, 0.3, 'square');
+                setTimeout(() => playTone(1400, 0.08, 0.25, 'square'), 30);
+            } else {
+                playTone(700, 0.06, 0.22, 'square');
+            }
+        }
+
+        function playPrecisionHitSound(bullseye) {
+            if (bullseye) {
+                playTone(1600, 0.05, 0.3, 'sine');
+                setTimeout(() => playTone(2000, 0.08, 0.25, 'sine'), 25);
+            } else {
+                playTone(1000, 0.06, 0.2, 'sine');
+            }
+        }
+
+        function playRhythmHitSound(perfect) {
+            if (perfect) {
+                playTone(880, 0.05, 0.3, 'square');
+                setTimeout(() => playTone(1100, 0.08, 0.25, 'square'), 30);
+            } else {
+                playTone(660, 0.06, 0.2, 'square');
+            }
+        }
+
+        function playMissSound() {
+            playTone(200, 0.08, 0.15, 'sawtooth');
+        }
+
         // ===== BIRD ROSTER =====
         const BIRDS = [
             { name:'SEAGULL',    color:'#cccccc', accent:'#aaaaaa', size:0.9, hp:25, speed:0.08, dmg:1.0, 
@@ -198,6 +229,37 @@
         let introStartFrame = 0;
         let prebattleStartFrame = 0;
         let menuStartFrame = 0;
+
+        // ===== FIGHT STYLE SYSTEM =====
+        // Each bird round uses a different WarioWare-style mechanic
+        const BIRD_FIGHT_STYLES = [
+            'TAP_MASH',    // 0: Seagull     - classic rapid tap
+            'RHYTHM',      // 1: Flamingo    - catch the beat
+            'TIMING_BAR',  // 2: Penguin     - tap the power zone
+            'PRECISION',   // 3: Owl         - hit the moving target
+            'TAP_MASH',    // 4: Eagle       - intense tap mash
+            'RHYTHM',      // 5: Hummingbird - ultra-fast rhythm
+            'TIMING_BAR',  // 6: Shoebill    - heavy timed strikes
+            'PRECISION',   // 7: Dodo        - precision shots
+            'TAP_MASH',    // 8: Opium Bird  - chaos tap
+        ];
+        const FIGHT_STYLE_NAMES = {
+            'TAP_MASH':   'BUTTON MASH',
+            'TIMING_BAR': 'TIMING STRIKE',
+            'PRECISION':  'PRECISION SHOT',
+            'RHYTHM':     'RHYTHM ATTACK',
+        };
+        let fightStyle = 'TAP_MASH';
+        // TIMING_BAR / RHYTHM shared oscillator
+        let sweetSpotPhase = 0;
+        // PRECISION target state
+        let precTarget = { x: 180, y: 280, vx: 2.5, vy: 1.8, r: 28, flash: 0 };
+        // RHYTHM beat track
+        let beats = [], beatSpawnTimer = 0;
+        // Shared hit feedback display
+        let hitFeedback = '', hitFeedbackTimer = 0;
+        // Input debounce for non-tap-mash modes
+        let lastInputTime = 0;
 
         let fakeHudValues = { wingDrag:0, beakSharp:0, momentum:0, peckSync:0 };
 
@@ -633,6 +695,11 @@
             ctx.fillStyle = currentBird().color;
             ctx.font = '14px monospace';
             ctx.fillText(`[ ${currentBird().tier} ]`, W/2, 205);
+            const styleKey = BIRD_FIGHT_STYLES[currentLevel] || 'TAP_MASH';
+            const styleColors = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'RHYTHM':'#ff66ff' };
+            ctx.fillStyle = styleColors[styleKey] || '#aaaaaa';
+            ctx.font = 'bold 11px monospace';
+            ctx.fillText(`MODE: ${FIGHT_STYLE_NAMES[styleKey] || styleKey}`, W/2, 221);
             ctx.font = '11px monospace'; ctx.textAlign = 'left';
             for (let i = 0; i < BIRDS.length; i++) {
                 const y = 230 + i * 18;
@@ -906,6 +973,142 @@
             }
         }
 
+        function drawFightStyleUI() {
+            const b = currentBird();
+            const bw = W - 40;
+            ctx.textAlign = 'left';
+
+            if (fightStyle === 'TAP_MASH') {
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
+                ctx.strokeStyle = '#ffff00'; ctx.strokeRect(10,H-108,W-20,75);
+                ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-100,(playerMeter/10)*bw,16);
+                ctx.strokeStyle = '#006622'; ctx.strokeRect(20,H-100,bw,16);
+                ctx.fillStyle = '#00ff44'; ctx.font='9px monospace'; ctx.textAlign='left';
+                ctx.fillText('YOU', 22, H-88);
+                ctx.fillStyle = b.color; ctx.fillRect(20,H-80,(aiMeter/10)*bw,16);
+                ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-80,bw,16);
+                ctx.fillStyle = b.color; ctx.font='9px monospace';
+                ctx.fillText(b.name, 22, H-68);
+                ctx.fillStyle = '#ffff00'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
+                ctx.fillText('⚔️ PECK METER ⚔️', W/2, H-46);
+
+            } else if (fightStyle === 'TIMING_BAR') {
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
+                ctx.strokeStyle = '#ffaa00'; ctx.strokeRect(10,H-108,W-20,75);
+                // AI threat meter
+                ctx.fillStyle = b.color; ctx.fillRect(20,H-100,(aiMeter/10)*bw,14);
+                ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-100,bw,14);
+                ctx.fillStyle = b.color; ctx.font='9px monospace'; ctx.textAlign='left';
+                ctx.fillText(b.name, 22, H-90);
+                // Timing bar
+                ctx.fillStyle = '#1a1100'; ctx.fillRect(20,H-78,bw,24);
+                ctx.strokeStyle = '#ffaa00'; ctx.strokeRect(20,H-78,bw,24);
+                // Two power zones (POWER and MAX)
+                const sz1 = 0.62, sz2 = 0.84, szHalf = 0.09;
+                ctx.fillStyle = 'rgba(0,200,70,0.45)';
+                ctx.fillRect(20 + (sz1-szHalf)*bw, H-78, szHalf*2*bw, 24);
+                ctx.fillRect(20 + (sz2-szHalf)*bw, H-78, szHalf*2*bw, 24);
+                // Labels above zones
+                ctx.fillStyle = '#00dd55'; ctx.font='7px monospace'; ctx.textAlign='center';
+                ctx.fillText('POWER', 20 + sz1*bw, H-80);
+                ctx.fillText('MAX', 20 + sz2*bw, H-80);
+                // Moving marker
+                const markerPos = (Math.sin(sweetSpotPhase) + 1) / 2;
+                const mx = 20 + markerPos * bw;
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(mx - 3, H-82, 6, 32);
+                ctx.fillStyle = '#ffaa00'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+                ctx.fillText('⚡ TAP THE POWER ZONE ⚡', W/2, H-42);
+
+            } else if (fightStyle === 'PRECISION') {
+                // Bottom HUD strip
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
+                ctx.strokeStyle = '#00ccff'; ctx.strokeRect(10,H-108,W-20,75);
+                ctx.fillStyle = b.color; ctx.fillRect(20,H-100,(aiMeter/10)*bw,14);
+                ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-100,bw,14);
+                ctx.fillStyle = b.color; ctx.font='9px monospace'; ctx.textAlign='left';
+                ctx.fillText(b.name, 22, H-90);
+                ctx.fillStyle = '#00ccff'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+                ctx.fillText('🎯 TAP THE TARGET 🎯', W/2, H-66);
+                // Draw target in arena
+                const tx = precTarget.x, ty = precTarget.y, tr = precTarget.r;
+                const fl = precTarget.flash;
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI*2);
+                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
+                ctx.fillStyle = fl > 0 ? 'rgba(255,220,0,0.22)' : 'rgba(0,100,200,0.22)';
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(tx, ty, tr * 0.42, 0, Math.PI*2);
+                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#ffffff';
+                ctx.fillStyle = fl > 0 ? `rgba(255,200,0,${fl*0.4})` : 'rgba(255,255,255,0.12)';
+                ctx.fill(); ctx.stroke();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
+                ctx.beginPath(); ctx.moveTo(tx-tr-5,ty); ctx.lineTo(tx-tr+8,ty); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tx+tr-8,ty); ctx.lineTo(tx+tr+5,ty); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tx,ty-tr-5); ctx.lineTo(tx,ty-tr+8); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tx,ty+tr-8); ctx.lineTo(tx,ty+tr+5); ctx.stroke();
+
+            } else if (fightStyle === 'RHYTHM') {
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
+                ctx.strokeStyle = '#ff66ff'; ctx.strokeRect(10,H-108,W-20,75);
+                ctx.fillStyle = b.color; ctx.fillRect(20,H-100,(aiMeter/10)*bw,14);
+                ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-100,bw,14);
+                ctx.fillStyle = b.color; ctx.font='9px monospace'; ctx.textAlign='left';
+                ctx.fillText(b.name, 22, H-90);
+                // Beat track
+                const trackY = H - 73;
+                ctx.fillStyle = '#150015'; ctx.fillRect(15,trackY-14,W-30,28);
+                ctx.strokeStyle = '#ff66ff'; ctx.strokeRect(15,trackY-14,W-30,28);
+                // Hit zone
+                const hitZoneX = 65;
+                ctx.fillStyle = 'rgba(255,100,255,0.22)';
+                ctx.fillRect(hitZoneX-18, trackY-14, 36, 28);
+                ctx.strokeStyle = '#ff66ff'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(hitZoneX,trackY-14); ctx.lineTo(hitZoneX,trackY+14); ctx.stroke();
+                ctx.lineWidth = 1;
+                ctx.fillStyle = '#ff66ff'; ctx.font='7px monospace'; ctx.textAlign='center';
+                ctx.fillText('TAP', hitZoneX, trackY+24);
+                // Beats
+                for (const bt of beats) {
+                    const a = bt.fade;
+                    const nearHit = Math.abs(bt.x - hitZoneX) < 25;
+                    ctx.fillStyle = bt.hit ? `rgba(0,255,100,${a})` : bt.miss ? `rgba(255,50,50,${a})` : nearHit ? `rgba(255,220,0,${a})` : `rgba(255,100,255,${a})`;
+                    ctx.beginPath(); ctx.arc(bt.x, trackY, 10, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = `rgba(255,255,255,${a*0.5})`; ctx.stroke();
+                }
+                ctx.fillStyle = '#ff66ff'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+                ctx.fillText('♪ CATCH THE BEAT ♪', W/2, H-42);
+            }
+
+            // Hit feedback overlay (all non-tap-mash modes)
+            if (fightStyle !== 'TAP_MASH' && hitFeedbackTimer > 0 && hitFeedback) {
+                const alpha = Math.min(1, hitFeedbackTimer / 20);
+                const isPerfect = hitFeedback.includes('PERFECT') || hitFeedback === 'BULLSEYE!';
+                const isGood = hitFeedback.includes('GOOD') || hitFeedback === 'HIT!' || hitFeedback.includes('POWER');
+                const fbColor = isPerfect ? '#ffff00' : isGood ? '#00ff88' : '#ff4444';
+                ctx.save(); ctx.globalAlpha = alpha;
+                ctx.fillStyle = fbColor; ctx.font='bold 20px monospace'; ctx.textAlign='center';
+                ctx.fillText(hitFeedback, W/2, H-115);
+                ctx.restore();
+            }
+
+            // Round-start instruction overlay
+            const fs = frame - roundStartFrame;
+            if (fs < 75) {
+                const alpha = fs < 40 ? Math.min(1, fs / 12) : Math.max(0, 1 - (fs - 40) / 35);
+                const instrMap = { 'TAP_MASH':'TAP FAST!', 'TIMING_BAR':'TAP THE POWER ZONE!', 'PRECISION':'TAP THE TARGET!', 'RHYTHM':'CATCH THE BEAT!' };
+                const colMap  = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'RHYTHM':'#ff66ff' };
+                ctx.save(); ctx.globalAlpha = alpha * 0.95;
+                ctx.fillStyle = 'rgba(0,0,0,0.78)';
+                ctx.fillRect(0, H/2 - 48, W, 96);
+                ctx.fillStyle = colMap[fightStyle] || '#ffffff';
+                ctx.font = 'bold 24px monospace'; ctx.textAlign = 'center';
+                ctx.fillText(instrMap[fightStyle] || 'FIGHT!', W/2, H/2 + 8);
+                ctx.restore();
+            }
+        }
+
         function draw() {
             ctx.save();
             if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
@@ -1000,18 +1203,7 @@
                 }
             }
 
-            ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
-            ctx.strokeStyle = '#ffff00'; ctx.strokeRect(10,H-108,W-20,75);
-            ctx.fillStyle = '#00ff44'; ctx.fillRect(20,H-100,(playerMeter/10)*(W-40),16);
-            ctx.strokeStyle = '#006622'; ctx.strokeRect(20,H-100,(W-40),16);
-            ctx.fillStyle = '#00ff44'; ctx.font = '9px monospace'; ctx.textAlign='left';
-            ctx.fillText('YOU', 22, H-88);
-            ctx.fillStyle = b.color; ctx.fillRect(20,H-80,(aiMeter/10)*(W-40),16);
-            ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-80,(W-40),16);
-            ctx.fillStyle = b.color; ctx.font = '9px monospace';
-            ctx.fillText(b.name, 22, H-68);
-            ctx.fillStyle = '#ffff00'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
-            ctx.fillText('⚔️ PECK METER ⚔️', W/2, H-46);
+            drawFightStyleUI();
 
             ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,H-30,W,30);
             ctx.textAlign='left'; ctx.fillStyle='#00ff88'; ctx.font='bold 12px monospace';
@@ -1100,6 +1292,43 @@
             peckAnim *= 0.91;
             flashAnim *= 0.88;
             if (Math.abs(peckAnim) < 1) peckAnim = 0;
+
+            // Fight style per-frame updates
+            sweetSpotPhase += 0.038 + currentLevel * 0.003;
+            if (fightStyle === 'PRECISION') {
+                precTarget.x += precTarget.vx; precTarget.y += precTarget.vy;
+                const minX = 60 + precTarget.r, maxX = W - 60 - precTarget.r;
+                const minY = 185 + precTarget.r, maxY = 510 - precTarget.r;
+                if (precTarget.x < minX || precTarget.x > maxX) {
+                    precTarget.vx *= -1;
+                    precTarget.x = Math.max(minX, Math.min(maxX, precTarget.x));
+                }
+                if (precTarget.y < minY || precTarget.y > maxY) {
+                    precTarget.vy *= -1;
+                    precTarget.y = Math.max(minY, Math.min(maxY, precTarget.y));
+                }
+                precTarget.flash = Math.max(0, precTarget.flash - 0.06);
+            } else if (fightStyle === 'RHYTHM') {
+                beatSpawnTimer++;
+                const interval = Math.max(20, 55 - currentLevel * 3);
+                if (beatSpawnTimer >= interval) {
+                    beatSpawnTimer = 0;
+                    beats.push({ x: W + 20, speed: 3.2 + currentLevel * 0.22, hit: false, miss: false, fade: 1 });
+                }
+                for (const bt of beats) {
+                    bt.x -= bt.speed;
+                    if (bt.hit || bt.miss) bt.fade = Math.max(0, bt.fade - 0.06);
+                }
+                for (const bt of beats) {
+                    if (!bt.hit && !bt.miss && bt.x < 45) {
+                        bt.miss = true;
+                        combo = Math.max(0, combo - 1);
+                        score = Math.max(0, score - 2);
+                    }
+                }
+                beats = beats.filter(b => b.x > -50 && b.fade > 0);
+            }
+            hitFeedbackTimer = Math.max(0, hitFeedbackTimer - 1);
         }
 
         function startRound() {
@@ -1113,6 +1342,21 @@
             combo = 0; taps = 0; score = 0; peckAnim = 0; flashAnim = 0;
             hudGlitch = 0; nerfAlertTimer = 0;
             roundStartFrame = frame;
+            // Fight style for this round
+            fightStyle = BIRD_FIGHT_STYLES[currentLevel] || 'TAP_MASH';
+            sweetSpotPhase = 0;
+            hitFeedback = ''; hitFeedbackTimer = 0; lastInputTime = 0;
+            const spd = 2.5 + currentLevel * 0.22;
+            precTarget = { x: 180, y: 270, vx: spd, vy: spd * 0.72, r: Math.max(15, 30 - currentLevel * 1.6), flash: 0 };
+            beats = []; beatSpawnTimer = 0;
+        }
+
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = W / rect.width;
+            const scaleY = H / rect.height;
+            const src = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+            return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
         }
 
         function handleTap(e) {
@@ -1199,25 +1443,119 @@
 
             const framesSinceStart = frame - roundStartFrame;
             const canDamage = framesSinceStart > 30;
-            
-            taps++;
-            const now = Date.now();
-            if (now - lastTap < 200) combo = Math.min(combo + 1, 30);
-            else combo = 1;
-            lastTap = now;
 
-            playerMeter += 0.8 + (combo * 0.05);
+            if (fightStyle === 'TAP_MASH') {
+                // Classic rapid-tap meter fill
+                taps++;
+                const now = Date.now();
+                if (now - lastTap < 200) combo = Math.min(combo + 1, 30);
+                else combo = 1;
+                lastTap = now;
+                playerMeter += 0.8 + (combo * 0.05);
+                if (playerMeter >= 10 && canDamage) {
+                    playerMeter -= 10;
+                    const dmg = 1.5 + (combo / 5);
+                    aiHP -= dmg;
+                    playPeckSound(true); playHitSound();
+                    peckAnim = 35;
+                    score += 20 + combo * 3;
+                    shakeX = (Math.random()-0.5)*4; shakeY = (Math.random()-0.5)*4;
+                }
 
-            if (playerMeter >= 10 && canDamage) {
-                playerMeter -= 10;
-                const dmg = 1.5 + (combo / 5);
-                aiHP -= dmg;
-                playPeckSound(true);
-                playHitSound();
-                peckAnim = 35;
-                score += 20 + combo * 3;
-                shakeX = (Math.random()-0.5)*4;
-                shakeY = (Math.random()-0.5)*4;
+            } else if (fightStyle === 'TIMING_BAR') {
+                // Debounce to prevent double-fire from multiple event types
+                const now = Date.now();
+                if (now - lastInputTime < 60) return;
+                lastInputTime = now;
+                taps++;
+                const markerPos = (Math.sin(sweetSpotPhase) + 1) / 2;
+                const sz1 = 0.62, sz2 = 0.84, szHalf = 0.09;
+                const inZone1 = Math.abs(markerPos - sz1) < szHalf;
+                const inZone2 = Math.abs(markerPos - sz2) < szHalf;
+                const nearZone = Math.abs(markerPos - sz1) < szHalf * 2.2 || Math.abs(markerPos - sz2) < szHalf * 2.2;
+                const now2 = Date.now();
+                if (now2 - lastTap < 600) combo = Math.min(combo + 1, 30); else combo = 1;
+                lastTap = now2;
+                if ((inZone1 || inZone2) && canDamage) {
+                    const isPerfect = inZone2;
+                    aiHP -= isPerfect ? (3.2 + combo * 0.18) : (1.8 + combo * 0.12);
+                    playTimingHitSound(isPerfect);
+                    peckAnim = 35;
+                    hitFeedback = isPerfect ? 'PERFECT HIT!' : 'POWER HIT!';
+                    hitFeedbackTimer = 50;
+                    score += isPerfect ? (35 + combo * 5) : (22 + combo * 3);
+                    shakeX = (Math.random()-0.5)*(isPerfect ? 6 : 4); shakeY = (Math.random()-0.5)*(isPerfect ? 6 : 4);
+                } else if (nearZone && canDamage) {
+                    aiHP -= 0.6 + combo * 0.04;
+                    playTimingHitSound(false);
+                    peckAnim = 15;
+                    hitFeedback = 'WEAK HIT!'; hitFeedbackTimer = 35;
+                    score += 8 + combo;
+                } else {
+                    hitFeedback = 'MISS!'; hitFeedbackTimer = 35;
+                    combo = Math.max(0, combo - 1);
+                    playMissSound();
+                }
+
+            } else if (fightStyle === 'PRECISION') {
+                const now = Date.now();
+                if (now - lastInputTime < 60) return;
+                lastInputTime = now;
+                taps++;
+                const pos = getCanvasPos(e);
+                const dist = Math.hypot(pos.x - precTarget.x, pos.y - precTarget.y);
+                if (dist <= precTarget.r && canDamage) {
+                    const bullseye = dist <= precTarget.r * 0.42;
+                    aiHP -= bullseye ? (2.8 + combo * 0.18) : (1.4 + combo * 0.1);
+                    const now2 = Date.now();
+                    if (now2 - lastTap < 500) combo = Math.min(combo + 1, 30); else combo = 1;
+                    lastTap = now2;
+                    playPrecisionHitSound(bullseye);
+                    peckAnim = 35;
+                    precTarget.flash = 1.0;
+                    precTarget.r = Math.min(28, precTarget.r + 4);
+                    hitFeedback = bullseye ? 'BULLSEYE!' : 'HIT!';
+                    hitFeedbackTimer = 45;
+                    score += bullseye ? (38 + combo * 5) : (18 + combo * 2);
+                    shakeX = (Math.random()-0.5)*(bullseye ? 5 : 3); shakeY = (Math.random()-0.5)*(bullseye ? 5 : 3);
+                } else if (dist > precTarget.r) {
+                    combo = Math.max(0, combo - 1);
+                    hitFeedback = 'MISS!'; hitFeedbackTimer = 30;
+                    playMissSound();
+                }
+
+            } else if (fightStyle === 'RHYTHM') {
+                const now = Date.now();
+                if (now - lastInputTime < 60) return;
+                lastInputTime = now;
+                taps++;
+                const hitZoneX = 65;
+                let best = null, bestDist = 999;
+                for (const bt of beats) {
+                    if (!bt.hit && !bt.miss) {
+                        const d = Math.abs(bt.x - hitZoneX);
+                        if (d < bestDist) { bestDist = d; best = bt; }
+                    }
+                }
+                if (best && bestDist < 24) {
+                    const perfect = bestDist < 9;
+                    best.hit = true;
+                    const now2 = Date.now();
+                    if (now2 - lastTap < 700) combo = Math.min(combo + 1, 30); else combo = 1;
+                    lastTap = now2;
+                    if (canDamage) {
+                        aiHP -= perfect ? (2.2 + combo * 0.14) : (1.1 + combo * 0.09);
+                        peckAnim = 35;
+                        score += perfect ? (32 + combo * 4) : (16 + combo * 2);
+                        shakeX = (Math.random()-0.5)*(perfect ? 5 : 3); shakeY = (Math.random()-0.5)*(perfect ? 5 : 3);
+                    }
+                    hitFeedback = perfect ? 'PERFECT!' : 'GOOD!'; hitFeedbackTimer = 45;
+                    playRhythmHitSound(perfect);
+                } else {
+                    hitFeedback = 'MISS!'; hitFeedbackTimer = 30;
+                    combo = Math.max(0, combo - 1);
+                    playMissSound();
+                }
             }
         }
 
