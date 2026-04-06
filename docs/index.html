@@ -1494,9 +1494,16 @@
                     hitFeedback = 'WEAK HIT!'; hitFeedbackTimer = 35;
                     score += 8 + combo;
                 } else {
-                    hitFeedback = 'MISS!'; hitFeedbackTimer = 35;
                     combo = Math.max(0, combo - 1);
                     playMissSound();
+                    if (canDamage) {
+                        playerHP -= 1.5;
+                        peckAnim = -20;
+                        shakeX = (Math.random()-0.5)*5; shakeY = (Math.random()-0.5)*5;
+                        hitFeedback = 'MISS! -HP'; hitFeedbackTimer = 35;
+                    } else {
+                        hitFeedback = 'MISS!'; hitFeedbackTimer = 35;
+                    }
                 }
 
             } else if (fightStyle === 'PRECISION') {
