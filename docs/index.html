@@ -1526,9 +1526,16 @@
                     hitFeedback = 'WEAK HIT!'; hitFeedbackTimer = 35;
                     score += 8 + combo;
                 } else {
-                    hitFeedback = 'MISS!'; hitFeedbackTimer = 35;
                     combo = Math.max(0, combo - 1);
                     playMissSound();
+                    if (canDamage) {
+                        playerHP -= 1.5;
+                        peckAnim = -20;
+                        shakeX = (Math.random()-0.5)*5; shakeY = (Math.random()-0.5)*5;
+                        hitFeedback = 'MISS! -HP'; hitFeedbackTimer = 35;
+                    } else {
+                        hitFeedback = 'MISS!'; hitFeedbackTimer = 35;
+                    }
                 }
 
             } else if (fightStyle === 'PRECISION') {
@@ -1589,6 +1596,11 @@
                     best.hit = true;
                     if (now - lastTap < 700) combo = Math.min(combo + 1, 30); else combo = 1;
                     lastTap = now;
+                    if (perfect) {
+                        aiMeter = 0;
+                    } else {
+                        aiMeter *= 0.5;
+                    }
                     if (canDamage) {
                         aiHP -= perfect ? (2.2 + combo * 0.14) : (1.1 + combo * 0.09);
                         peckAnim = 35;
