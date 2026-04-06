@@ -253,7 +253,11 @@
         // TIMING_BAR / RHYTHM shared oscillator
         let sweetSpotPhase = 0;
         // PRECISION target state
-        let precTarget = { x: 180, y: 280, vx: 2.5, vy: 1.8, r: 28, flash: 0 };
+        let precTargets = [];
+        // PRECISION hit detection constants (shared by drawFightStyleUI and handleTap)
+        const PREC_CHAR_R = 35;  // radius around each character counted as a hit
+        const PREC_PLAYER_X = 85, PREC_PLAYER_Y = 320;
+        const PREC_ENEMY_X  = W - 85, PREC_ENEMY_Y  = 320;
         // RHYTHM beat track
         let beats = [], beatSpawnTimer = 0;
         // Shared hit feedback display
@@ -1029,25 +1033,46 @@
                 ctx.fillStyle = b.color; ctx.font='9px monospace'; ctx.textAlign='left';
                 ctx.fillText(b.name, 22, H-90);
                 ctx.fillStyle = '#00ccff'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
-                ctx.fillText('🎯 TAP THE TARGET 🎯', W/2, H-66);
-                // Draw target in arena
-                const tx = precTarget.x, ty = precTarget.y, tr = precTarget.r;
-                const fl = precTarget.flash;
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI*2);
-                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
-                ctx.fillStyle = fl > 0 ? 'rgba(255,220,0,0.22)' : 'rgba(0,100,200,0.22)';
-                ctx.fill(); ctx.stroke();
-                ctx.beginPath(); ctx.arc(tx, ty, tr * 0.42, 0, Math.PI*2);
-                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#ffffff';
-                ctx.fillStyle = fl > 0 ? `rgba(255,200,0,${fl*0.4})` : 'rgba(255,255,255,0.12)';
-                ctx.fill(); ctx.stroke();
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
-                ctx.beginPath(); ctx.moveTo(tx-tr-5,ty); ctx.lineTo(tx-tr+8,ty); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(tx+tr-8,ty); ctx.lineTo(tx+tr+5,ty); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(tx,ty-tr-5); ctx.lineTo(tx,ty-tr+8); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(tx,ty+tr-8); ctx.lineTo(tx,ty+tr+5); ctx.stroke();
+                ctx.fillText('🎯 TIME YOUR SHOT 🎯', W/2, H-66);
+                // Check which characters have a crosshair overlapping them right now
+                let dangerPlayer = false, readyEnemy = false;
+                for (const tgt of precTargets) {
+                    if (Math.hypot(tgt.x - PREC_ENEMY_X,  tgt.y - PREC_ENEMY_Y)  <= tgt.r + PREC_CHAR_R) readyEnemy = true;
+                    if (Math.hypot(tgt.x - PREC_PLAYER_X, tgt.y - PREC_PLAYER_Y) <= tgt.r + PREC_CHAR_R) dangerPlayer = true;
+                }
+                // Draw pulsing rings around characters to signal tap outcome
+                if (readyEnemy) {
+                    ctx.beginPath(); ctx.arc(PREC_ENEMY_X, PREC_ENEMY_Y, PREC_CHAR_R + 8, 0, Math.PI * 2);
+                    const ePulse = 0.5 + 0.5 * Math.sin(frame * 0.3);
+                    ctx.strokeStyle = `rgba(0,255,100,${0.6 + ePulse * 0.4})`;
+                    ctx.lineWidth = 3; ctx.stroke();
+                }
+                if (dangerPlayer) {
+                    ctx.beginPath(); ctx.arc(PREC_PLAYER_X, PREC_PLAYER_Y, PREC_CHAR_R + 8, 0, Math.PI * 2);
+                    const pPulse = 0.5 + 0.5 * Math.sin(frame * 0.4);
+                    ctx.strokeStyle = `rgba(255,50,50,${0.6 + pPulse * 0.4})`;
+                    ctx.lineWidth = 3; ctx.stroke();
+                }
+                // Draw all crosshair targets
+                for (const tgt of precTargets) {
+                    const tx = tgt.x, ty = tgt.y, tr = tgt.r;
+                    const fl = tgt.flash;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI*2);
+                    ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
+                    ctx.fillStyle = fl > 0 ? 'rgba(255,220,0,0.22)' : 'rgba(0,100,200,0.22)';
+                    ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(tx, ty, tr * 0.42, 0, Math.PI*2);
+                    ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#ffffff';
+                    ctx.fillStyle = fl > 0 ? `rgba(255,200,0,${fl*0.4})` : 'rgba(255,255,255,0.12)';
+                    ctx.fill(); ctx.stroke();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
+                    ctx.beginPath(); ctx.moveTo(tx-tr-5,ty); ctx.lineTo(tx-tr+8,ty); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(tx+tr-8,ty); ctx.lineTo(tx+tr+5,ty); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(tx,ty-tr-5); ctx.lineTo(tx,ty-tr+8); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(tx,ty+tr-8); ctx.lineTo(tx,ty+tr+5); ctx.stroke();
+                }
 
             } else if (fightStyle === 'RHYTHM') {
                 ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
@@ -1084,7 +1109,7 @@
             // Hit feedback overlay (all non-tap-mash modes)
             if (fightStyle !== 'TAP_MASH' && hitFeedbackTimer > 0 && hitFeedback) {
                 const alpha = Math.min(1, hitFeedbackTimer / 20);
-                const isPerfect = hitFeedback.includes('PERFECT') || hitFeedback === 'BULLSEYE!';
+                const isPerfect = hitFeedback.includes('PERFECT') || hitFeedback === 'BULLSEYE!' || hitFeedback === 'HIT & HURT!';
                 const isGood = hitFeedback.includes('GOOD') || hitFeedback === 'HIT!' || hitFeedback.includes('POWER');
                 const fbColor = isPerfect ? '#ffff00' : isGood ? '#00ff88' : '#ff4444';
                 ctx.save(); ctx.globalAlpha = alpha;
@@ -1097,7 +1122,7 @@
             const fs = frame - roundStartFrame;
             if (fs < 75) {
                 const alpha = fs < 40 ? Math.min(1, fs / 12) : Math.max(0, 1 - (fs - 40) / 35);
-                const instrMap = { 'TAP_MASH':'TAP FAST!', 'TIMING_BAR':'TAP THE POWER ZONE!', 'PRECISION':'TAP THE TARGET!', 'RHYTHM':'CATCH THE BEAT!' };
+                const instrMap = { 'TAP_MASH':'TAP FAST!', 'TIMING_BAR':'TAP THE POWER ZONE!', 'PRECISION':'TIME YOUR SHOT!', 'RHYTHM':'CATCH THE BEAT!' };
                 const colMap  = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'RHYTHM':'#ff66ff' };
                 ctx.save(); ctx.globalAlpha = alpha * 0.95;
                 ctx.fillStyle = 'rgba(0,0,0,0.78)';
@@ -1296,21 +1321,22 @@
             // Fight style per-frame updates
             sweetSpotPhase += 0.038 + currentLevel * 0.003;
             if (fightStyle === 'PRECISION') {
-                precTarget.x += precTarget.vx; precTarget.y += precTarget.vy;
-                const minX = 60 + precTarget.r, maxX = W - 60 - precTarget.r;
-                const minY = 185 + precTarget.r, maxY = 510 - precTarget.r;
-                if (precTarget.x < minX || precTarget.x > maxX) {
-                    precTarget.vx *= -1;
-                    precTarget.x = Math.max(minX, Math.min(maxX, precTarget.x));
-                }
-                if (precTarget.y < minY || precTarget.y > maxY) {
-                    precTarget.vy *= -1;
-                    precTarget.y = Math.max(minY, Math.min(maxY, precTarget.y));
-                }
-                precTarget.flash = Math.max(0, precTarget.flash - 0.06);
-                // Gradually shrink target radius back toward minimum to maintain difficulty
                 const minR = Math.max(15, 30 - currentLevel * 1.6);
-                if (precTarget.r > minR) precTarget.r = Math.max(minR, precTarget.r - 0.04);
+                for (const tgt of precTargets) {
+                    tgt.x += tgt.vx; tgt.y += tgt.vy;
+                    const xMin = 60 + tgt.r, xMax = W - 60 - tgt.r;
+                    const yMin = 185 + tgt.r, yMax = 510 - tgt.r;
+                    if (tgt.x < xMin || tgt.x > xMax) {
+                        tgt.vx *= -1;
+                        tgt.x = Math.max(xMin, Math.min(xMax, tgt.x));
+                    }
+                    if (tgt.y < yMin || tgt.y > yMax) {
+                        tgt.vy *= -1;
+                        tgt.y = Math.max(yMin, Math.min(yMax, tgt.y));
+                    }
+                    tgt.flash = Math.max(0, tgt.flash - 0.06);
+                    if (tgt.r > minR) tgt.r = Math.max(minR, tgt.r - 0.04);
+                }
             } else if (fightStyle === 'RHYTHM') {
                 beatSpawnTimer++;
                 const interval = Math.max(20, 55 - currentLevel * 3);
@@ -1350,7 +1376,13 @@
             sweetSpotPhase = 0;
             hitFeedback = ''; hitFeedbackTimer = 0; lastInputTime = 0;
             const spd = 2.5 + currentLevel * 0.22;
-            precTarget = { x: 180, y: 270, vx: spd, vy: spd * 0.72, r: Math.max(15, 30 - currentLevel * 1.6), flash: 0 };
+            const baseR = Math.max(15, 30 - currentLevel * 1.6);
+            precTargets = [
+                // Positions chosen so safe (enemy-only) windows open ~40 frames after round start
+                { x: 90,  y: 315, vx: spd,         vy: spd * 0.15,  r: baseR, flash: 0 },
+                { x: 250, y: 240, vx: -spd * 0.85,  vy: spd * 0.95,  r: baseR, flash: 0 },
+                { x: 175, y: 460, vx: spd * 0.5,    vy: -spd * 1.2,  r: baseR, flash: 0 },
+            ];
             beats = []; beatSpawnTimer = 0;
         }
 
@@ -1504,26 +1536,40 @@
                 if (now - lastInputTime < 60) return;
                 lastInputTime = now;
                 taps++;
-                const pos = getCanvasPos(e);
-                const dist = Math.hypot(pos.x - precTarget.x, pos.y - precTarget.y);
-                if (dist <= precTarget.r && canDamage) {
-                    const bullseye = dist <= precTarget.r * 0.42;
-                    aiHP -= bullseye ? (2.8 + combo * 0.18) : (1.4 + combo * 0.1);
+                // Check each crosshair against player and opponent positions
+                let hitEnemy = false, hitSelf = false;
+                for (const tgt of precTargets) {
+                    const dEnemy = Math.hypot(tgt.x - PREC_ENEMY_X,  tgt.y - PREC_ENEMY_Y);
+                    const dSelf  = Math.hypot(tgt.x - PREC_PLAYER_X, tgt.y - PREC_PLAYER_Y);
+                    if (dEnemy <= tgt.r + PREC_CHAR_R) { hitEnemy = true; tgt.flash = 1.0; }
+                    if (dSelf  <= tgt.r + PREC_CHAR_R) { hitSelf  = true; tgt.flash = 1.0; }
+                }
+                if (hitEnemy && canDamage) {
+                    // Flat damage per tap; self-damage (1.5) is slightly less than enemy attack dmg for balance
+                    aiHP -= 2.0 + combo * 0.12;
                     if (now - lastTap < 500) combo = Math.min(combo + 1, 30); else combo = 1;
                     lastTap = now;
-                    playPrecisionHitSound(bullseye);
-                    peckAnim = 35;
-                    precTarget.flash = 1.0;
-                    precTarget.r = Math.min(28, precTarget.r + 4);
-                    hitFeedback = bullseye ? 'BULLSEYE!' : 'HIT!';
-                    hitFeedbackTimer = 45;
-                    score += bullseye ? (38 + combo * 5) : (18 + combo * 2);
-                    shakeX = (Math.random()-0.5)*(bullseye ? 5 : 3); shakeY = (Math.random()-0.5)*(bullseye ? 5 : 3);
-                } else if (dist > precTarget.r) {
+                    playPrecisionHitSound(false);
+                    score += 22 + combo * 3;
+                    shakeX = (Math.random()-0.5)*3; shakeY = (Math.random()-0.5)*3;
+                }
+                if (hitSelf && canDamage) {
+                    playerHP -= 1.5; // intentional self-damage: risk/reward penalty
+                    playPeckSound(false);
+                    shakeX = (Math.random()-0.5)*6; shakeY = (Math.random()-0.5)*6;
+                }
+                if (!hitEnemy && !hitSelf) {
                     combo = Math.max(0, combo - 1);
-                    hitFeedback = 'MISS!'; hitFeedbackTimer = 30;
                     playMissSound();
                 }
+                // Set peck animation based on combined outcome
+                if      (hitEnemy && !hitSelf) peckAnim = 35;
+                else if (hitEnemy &&  hitSelf) peckAnim = 15;
+                else if (hitSelf)              peckAnim = -20;
+                hitFeedback = hitEnemy && hitSelf ? 'HIT & HURT!' :
+                              hitEnemy             ? 'HIT!'        :
+                              hitSelf              ? 'SELF HIT!'   : 'MISS!';
+                hitFeedbackTimer = 45;
 
             } else if (fightStyle === 'RHYTHM') {
                 const now = Date.now();
