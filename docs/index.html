@@ -236,25 +236,32 @@
             'TAP_MASH',    // 0: Seagull     - classic rapid tap
             'RHYTHM',      // 1: Flamingo    - catch the beat
             'TIMING_BAR',  // 2: Penguin     - tap the power zone
-            'PRECISION',   // 3: Owl         - hit the moving target
-            'TAP_MASH',    // 4: Eagle       - intense tap mash
-            'RHYTHM',      // 5: Hummingbird - ultra-fast rhythm
-            'TIMING_BAR',  // 6: Shoebill    - heavy timed strikes
-            'PRECISION',   // 7: Dodo        - precision shots
-            'TAP_MASH',    // 8: Opium Bird  - chaos tap
+            'PRECISION',      // 3: Owl         - hit the moving target
+            'TAP_MASH',       // 4: Eagle       - intense tap mash
+            'RHYTHM',         // 5: Hummingbird - ultra-fast rhythm
+            'TIMING_BAR',     // 6: Shoebill    - heavy timed strikes
+            'PRECISION',      // 7: Dodo        - precision shots (faster, smaller)
+            'MULTI_CROSSHAIR',// 8: Opium Bird  - multi-crosshair risk/reward
         ];
         const FIGHT_STYLE_NAMES = {
-            'TAP_MASH':   'BUTTON MASH',
-            'TIMING_BAR': 'TIMING STRIKE',
-            'PRECISION':  'PRECISION SHOT',
-            'RHYTHM':     'RHYTHM ATTACK',
+            'TAP_MASH':        'BUTTON MASH',
+            'TIMING_BAR':      'TIMING STRIKE',
+            'PRECISION':       'PRECISION SHOT',
+            'RHYTHM':          'RHYTHM ATTACK',
+            'MULTI_CROSSHAIR': 'CROSSFIRE',
         };
         let fightStyle = 'TAP_MASH';
         // TIMING_BAR / RHYTHM shared oscillator
         let sweetSpotPhase = 0;
-        // PRECISION target state
+        // PRECISION target state (single target — Owl and Dodo)
+        let precTarget = { x: 180, y: 280, vx: 2.5, vy: 1.8, r: 28, flash: 0 };
+        const MAX_PREC_TARGET_RADIUS = 28;  // upper cap on target radius (expands on hit, shrinks over time)
+        // Dodo-specific PRECISION difficulty modifiers (same mechanic, harder values)
+        const DODO_SPEED_MULTIPLIER  = 1.5;
+        const DODO_RADIUS_MULTIPLIER = 0.65;
+        // MULTI_CROSSHAIR target state (Opium Bird)
         let precTargets = [];
-        // PRECISION hit detection constants (shared by drawFightStyleUI and handleTap)
+        // MULTI_CROSSHAIR hit detection constants (shared by drawFightStyleUI and handleTap)
         const PREC_CHAR_R = 35;  // radius around each character counted as a hit
         const PREC_PLAYER_X = 85, PREC_PLAYER_Y = 320;
         const PREC_ENEMY_X  = W - 85, PREC_ENEMY_Y  = 320;
@@ -700,7 +707,7 @@
             ctx.font = '14px monospace';
             ctx.fillText(`[ ${currentBird().tier} ]`, W/2, 205);
             const styleKey = BIRD_FIGHT_STYLES[currentLevel] || 'TAP_MASH';
-            const styleColors = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'RHYTHM':'#ff66ff' };
+            const styleColors = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'RHYTHM':'#ff66ff', 'MULTI_CROSSHAIR':'#ff44ff' };
             ctx.fillStyle = styleColors[styleKey] || '#aaaaaa';
             ctx.font = 'bold 11px monospace';
             ctx.fillText(`MODE: ${FIGHT_STYLE_NAMES[styleKey] || styleKey}`, W/2, 221);
@@ -1033,6 +1040,35 @@
                 ctx.fillStyle = b.color; ctx.font='9px monospace'; ctx.textAlign='left';
                 ctx.fillText(b.name, 22, H-90);
                 ctx.fillStyle = '#00ccff'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+                ctx.fillText('🎯 TAP THE TARGET 🎯', W/2, H-66);
+                // Draw single moving target in arena
+                const tx = precTarget.x, ty = precTarget.y, tr = precTarget.r;
+                const fl = precTarget.flash;
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI*2);
+                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
+                ctx.fillStyle = fl > 0 ? 'rgba(255,220,0,0.22)' : 'rgba(0,100,200,0.22)';
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(tx, ty, tr * 0.42, 0, Math.PI*2);
+                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#ffffff';
+                ctx.fillStyle = fl > 0 ? `rgba(255,200,0,${fl*0.4})` : 'rgba(255,255,255,0.12)';
+                ctx.fill(); ctx.stroke();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = fl > 0 ? `rgba(255,255,0,${fl})` : '#00ccff';
+                ctx.beginPath(); ctx.moveTo(tx-tr-5,ty); ctx.lineTo(tx-tr+8,ty); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tx+tr-8,ty); ctx.lineTo(tx+tr+5,ty); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tx,ty-tr-5); ctx.lineTo(tx,ty-tr+8); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tx,ty+tr-8); ctx.lineTo(tx,ty+tr+5); ctx.stroke();
+
+            } else if (fightStyle === 'MULTI_CROSSHAIR') {
+                // Bottom HUD strip
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10,H-108,W-20,75);
+                ctx.strokeStyle = '#00ccff'; ctx.strokeRect(10,H-108,W-20,75);
+                ctx.fillStyle = b.color; ctx.fillRect(20,H-100,(aiMeter/10)*bw,14);
+                ctx.strokeStyle = '#663300'; ctx.strokeRect(20,H-100,bw,14);
+                ctx.fillStyle = b.color; ctx.font='9px monospace'; ctx.textAlign='left';
+                ctx.fillText(b.name, 22, H-90);
+                ctx.fillStyle = '#00ccff'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
                 ctx.fillText('🎯 TIME YOUR SHOT 🎯', W/2, H-66);
                 // Check which characters have a crosshair overlapping them right now
                 let dangerPlayer = false, readyEnemy = false;
@@ -1122,8 +1158,8 @@
             const fs = frame - roundStartFrame;
             if (fs < 75) {
                 const alpha = fs < 40 ? Math.min(1, fs / 12) : Math.max(0, 1 - (fs - 40) / 35);
-                const instrMap = { 'TAP_MASH':'TAP FAST!', 'TIMING_BAR':'TAP THE POWER ZONE!', 'PRECISION':'TIME YOUR SHOT!', 'RHYTHM':'CATCH THE BEAT!' };
-                const colMap  = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'RHYTHM':'#ff66ff' };
+                const instrMap = { 'TAP_MASH':'TAP FAST!', 'TIMING_BAR':'TAP THE POWER ZONE!', 'PRECISION':'TAP THE TARGET!', 'MULTI_CROSSHAIR':'TIME YOUR SHOT!', 'RHYTHM':'CATCH THE BEAT!' };
+                const colMap  = { 'TAP_MASH':'#00ff44', 'TIMING_BAR':'#ffaa00', 'PRECISION':'#00ccff', 'MULTI_CROSSHAIR':'#00ccff', 'RHYTHM':'#ff66ff' };
                 ctx.save(); ctx.globalAlpha = alpha * 0.95;
                 ctx.fillStyle = 'rgba(0,0,0,0.78)';
                 ctx.fillRect(0, H/2 - 48, W, 96);
@@ -1321,6 +1357,22 @@
             // Fight style per-frame updates
             sweetSpotPhase += 0.038 + currentLevel * 0.003;
             if (fightStyle === 'PRECISION') {
+                precTarget.x += precTarget.vx; precTarget.y += precTarget.vy;
+                const minX = 60 + precTarget.r, maxX = W - 60 - precTarget.r;
+                const minY = 185 + precTarget.r, maxY = 510 - precTarget.r;
+                if (precTarget.x < minX || precTarget.x > maxX) {
+                    precTarget.vx *= -1;
+                    precTarget.x = Math.max(minX, Math.min(maxX, precTarget.x));
+                }
+                if (precTarget.y < minY || precTarget.y > maxY) {
+                    precTarget.vy *= -1;
+                    precTarget.y = Math.max(minY, Math.min(maxY, precTarget.y));
+                }
+                precTarget.flash = Math.max(0, precTarget.flash - 0.06);
+                // Gradually shrink target radius back toward minimum to maintain difficulty
+                const minR = Math.max(15, 30 - currentLevel * 1.6);
+                if (precTarget.r > minR) precTarget.r = Math.max(minR, precTarget.r - 0.04);
+            } else if (fightStyle === 'MULTI_CROSSHAIR') {
                 const minR = Math.max(15, 30 - currentLevel * 1.6);
                 for (const tgt of precTargets) {
                     tgt.x += tgt.vx; tgt.y += tgt.vy;
@@ -1377,12 +1429,20 @@
             hitFeedback = ''; hitFeedbackTimer = 0; lastInputTime = 0;
             const spd = 2.5 + currentLevel * 0.22;
             const baseR = Math.max(15, 30 - currentLevel * 1.6);
-            precTargets = [
+            if (fightStyle === 'PRECISION') {
+                // Dodo (level 7) gets a harder version: faster and smaller target
+                const dodoBump   = currentLevel === 7 ? DODO_SPEED_MULTIPLIER  : 1.0;
+                const dodoShrink = currentLevel === 7 ? DODO_RADIUS_MULTIPLIER : 1.0;
+                precTarget = { x: 180, y: 270, vx: spd * dodoBump, vy: spd * 0.72 * dodoBump, r: Math.max(10, baseR * dodoShrink), flash: 0 };
+            } else if (fightStyle === 'MULTI_CROSSHAIR') {
+                // Opium Bird: 3 independent crosshairs with risk/reward mechanic
                 // Positions chosen so safe (enemy-only) windows open ~40 frames after round start
-                { x: 90,  y: 315, vx: spd,         vy: spd * 0.15,  r: baseR, flash: 0 },
-                { x: 250, y: 240, vx: -spd * 0.85,  vy: spd * 0.95,  r: baseR, flash: 0 },
-                { x: 175, y: 460, vx: spd * 0.5,    vy: -spd * 1.2,  r: baseR, flash: 0 },
-            ];
+                precTargets = [
+                    { x: 90,  y: 315, vx: spd,         vy: spd * 0.15,  r: baseR, flash: 0 },
+                    { x: 250, y: 240, vx: -spd * 0.85,  vy: spd * 0.95,  r: baseR, flash: 0 },
+                    { x: 175, y: 460, vx: spd * 0.5,    vy: -spd * 1.2,  r: baseR, flash: 0 },
+                ];
+            }
             beats = []; beatSpawnTimer = 0;
         }
 
@@ -1539,6 +1599,32 @@
                 }
 
             } else if (fightStyle === 'PRECISION') {
+                const now = Date.now();
+                if (now - lastInputTime < 60) return;
+                lastInputTime = now;
+                taps++;
+                const pos = getCanvasPos(e);
+                const dist = Math.hypot(pos.x - precTarget.x, pos.y - precTarget.y);
+                if (dist <= precTarget.r && canDamage) {
+                    const bullseye = dist <= precTarget.r * 0.42;
+                    aiHP -= bullseye ? (2.8 + combo * 0.18) : (1.4 + combo * 0.1);
+                    if (now - lastTap < 500) combo = Math.min(combo + 1, 30); else combo = 1;
+                    lastTap = now;
+                    playPrecisionHitSound(bullseye);
+                    peckAnim = 35;
+                    precTarget.flash = 1.0;
+                    precTarget.r = Math.min(MAX_PREC_TARGET_RADIUS, precTarget.r + 4);
+                    hitFeedback = bullseye ? 'BULLSEYE!' : 'HIT!';
+                    hitFeedbackTimer = 45;
+                    score += bullseye ? (38 + combo * 5) : (18 + combo * 2);
+                    shakeX = (Math.random()-0.5)*(bullseye ? 5 : 3); shakeY = (Math.random()-0.5)*(bullseye ? 5 : 3);
+                } else if (dist > precTarget.r) {
+                    combo = Math.max(0, combo - 1);
+                    hitFeedback = 'MISS!'; hitFeedbackTimer = 30;
+                    playMissSound();
+                }
+
+            } else if (fightStyle === 'MULTI_CROSSHAIR') {
                 const now = Date.now();
                 if (now - lastInputTime < 60) return;
                 lastInputTime = now;
