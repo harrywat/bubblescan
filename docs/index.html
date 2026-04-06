@@ -212,7 +212,8 @@
         let playerMeter = 0, aiMeter = 0;
         let playerHP = 0, playerMaxHP = 35;
         let aiHP = 0, aiMaxHP = 0;
-        let combo = 0, score = 0, totalScore = 0, taps = 0;
+        let combo = 0, score = 0, totalScore = 0, taps = 0, totalTaps = 0;
+        let fightStartTime = 0, totalFightMs = 0;
         let peckAnim = 0, flashAnim = 0;
         let lastTap = 0;
         let frame = 0;
@@ -1343,6 +1344,8 @@
             }
 
             if (aiHP <= 0) {
+                totalFightMs += Date.now() - fightStartTime;
+                totalTaps += taps;
                 gameState = 'transition';
                 totalScore += score;
                 transitionTimer = 0;
@@ -1421,11 +1424,13 @@
             playerMeter = 0; aiMeter = 0;
             if (currentLevel === 0 || playerHP <= 0) {
                 playerHP = playerMaxHP;
+                totalTaps = 0; totalFightMs = 0;
             }
             aiHP = b.hp; aiMaxHP = b.hp;
             combo = 0; taps = 0; score = 0; peckAnim = 0; flashAnim = 0;
             hudGlitch = 0; nerfAlertTimer = 0;
             roundStartFrame = frame;
+            fightStartTime = Date.now();
             // Fight style for this round
             fightStyle = BIRD_FIGHT_STYLES[currentLevel] || 'TAP_MASH';
             sweetSpotPhase = 0;
@@ -1510,7 +1515,7 @@
                     playVictoryFanfare();
                     gameState = 'gauntletwin';
                     gauntletWinStartFrame = frame;
-                    finalApm = Math.max(1, Math.floor((taps / Math.max(frame, 1)) * 3600));
+                    finalApm = totalFightMs > 0 ? Math.round(totalTaps / (totalFightMs / 60000)) : 0;
                 } else {
                     playLevelTransition();
                     gameState = 'menu';
