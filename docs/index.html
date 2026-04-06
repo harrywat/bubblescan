@@ -170,15 +170,15 @@
             { name:'DODO',       color:'#ff4444', accent:'#cc0000', size:1.6, hp:85, speed:0.04, dmg:3.2, 
               taunt:'LEAVE NOW', winQuote:'HOW???', tier:'???-TIER',
               stats:{wingDrag:'N/A',beakSharp:'???',featherDens:'EXTINCT',peckDPS:'ERROR',existence:'ILLEGAL'} },
-            { name:'OPIUM BIRD', color:'#9900ff', accent:'#6600cc', size:1.5, hp:90, speed:0.04, dmg:3.5, 
-              taunt:'EROSION', winQuote:'OPIUM BIRD UNLOCKED???', tier:'BANNED',
+            { name:'PRISM BIRD', color:'#9900ff', accent:'#6600cc', size:1.5, hp:90, speed:0.04, dmg:3.5, 
+              taunt:'EROSION', winQuote:'PRISM BIRD UNLOCKED???', tier:'BANNED',
               stats:{wingDrag:'∞',beakSharp:'VOID',featherDens:'NONE',peckDPS:'REDACTED',dimension:'4TH',rarity:'0.001%'} },
         ];
 
         const PATCH_NOTES = [
             'v3.47 - Shoebill stare nerfed (was instant KO)',
             'v3.46 - Hummingbird hitbox increased 400%',
-            'v3.45 - Opium Bird removed for maintenance',
+            'v3.45 - Prism Bird removed for maintenance',
             'v3.44 - Penguin slide now costs stamina',
             'v3.43 - Dodo spawn rate reduced to 0.01%',
             'v3.42 - Flamingo heal tick halved AGAIN',
@@ -193,7 +193,7 @@
             'v3.33 - Bird Game 4 announcement was fake',
             'v3.32 - Hummingbird stamina drain DOUBLED',
             'v3.31 - Fixed bug where Dodo could fly',
-            'v3.30 - Opium Bird health pool "adjusted"',
+            'v3.30 - Prism Bird health pool "adjusted"',
             'v3.29 - Pigeon is fair and balanced - devs',
             'v3.28 - Hummingbird rest-on-flower mechanic added',
         ];
@@ -241,7 +241,7 @@
             'RHYTHM',         // 5: Hummingbird - ultra-fast rhythm
             'TIMING_BAR',     // 6: Shoebill    - heavy timed strikes
             'PRECISION',      // 7: Dodo        - precision shots (faster, smaller)
-            'MULTI_CROSSHAIR',// 8: Opium Bird  - multi-crosshair risk/reward
+            'MULTI_CROSSHAIR',// 8: Prism Bird  - multi-crosshair risk/reward
         ];
         const FIGHT_STYLE_NAMES = {
             'TAP_MASH':        'BUTTON MASH',
@@ -259,12 +259,15 @@
         // Dodo-specific PRECISION difficulty modifiers (same mechanic, harder values)
         const DODO_SPEED_MULTIPLIER  = 1.5;
         const DODO_RADIUS_MULTIPLIER = 0.65;
-        // MULTI_CROSSHAIR target state (Opium Bird)
+        // MULTI_CROSSHAIR target state (Prism Bird)
         let precTargets = [];
         // MULTI_CROSSHAIR hit detection constants (shared by drawFightStyleUI and handleTap)
         const PREC_CHAR_R = 35;  // radius around each character counted as a hit
         const PREC_PLAYER_X = 85, PREC_PLAYER_Y = 320;
         const PREC_ENEMY_X  = W - 85, PREC_ENEMY_Y  = 320;
+        // Prism Bird MULTI_CROSSHAIR difficulty modifiers: slow peck rate, massive damage on strike
+        const PRISM_BIRD_SPEED_MULT  = 0.3;   // crosshairs move at 30% speed — slow, deliberate peck timing
+        const PRISM_BIRD_DMG_MULT    = 4.5;   // each strike deals massively amplified damage
         // RHYTHM beat track
         let beats = [], beatSpawnTimer = 0;
         // Shared hit feedback display
@@ -509,7 +512,7 @@
             ctx.restore();
         }
 
-        function drawOpiumBird(x, y, lunge, scale = 1) {
+        function drawPrismBird(x, y, lunge, scale = 1) {
             const s = scale;
             ctx.save();
             ctx.translate(x, y);
@@ -549,7 +552,7 @@
                 case 'HUMMINGBIRD': drawHummingbird(0, 0, lunge, scale); break;
                 case 'SHOEBILL':    drawShoebill(0, 0, lunge, scale); break;
                 case 'DODO':        drawDodo(0, 0, lunge, scale); break;
-                case 'OPIUM BIRD':  drawOpiumBird(0, 0, lunge, scale); break;
+                case 'PRISM BIRD':  drawPrismBird(0, 0, lunge, scale); break;
             }
             ctx.restore();
         }
@@ -1435,12 +1438,12 @@
                 const dodoShrink = currentLevel === 7 ? DODO_RADIUS_MULTIPLIER : 1.0;
                 precTarget = { x: 180, y: 270, vx: spd * dodoBump, vy: spd * 0.72 * dodoBump, r: Math.max(10, baseR * dodoShrink), flash: 0 };
             } else if (fightStyle === 'MULTI_CROSSHAIR') {
-                // Opium Bird: 3 independent crosshairs with risk/reward mechanic
-                // Positions chosen so safe (enemy-only) windows open ~40 frames after round start
+                // Prism Bird: 3 independent crosshairs with risk/reward mechanic
+                // Crosshairs move slowly so each alignment window is a deliberate timed strike
                 precTargets = [
-                    { x: 90,  y: 315, vx: spd,         vy: spd * 0.15,  r: baseR, flash: 0 },
-                    { x: 250, y: 240, vx: -spd * 0.85,  vy: spd * 0.95,  r: baseR, flash: 0 },
-                    { x: 175, y: 460, vx: spd * 0.5,    vy: -spd * 1.2,  r: baseR, flash: 0 },
+                    { x: 90,  y: 315, vx: spd * PRISM_BIRD_SPEED_MULT,          vy: spd * 0.15 * PRISM_BIRD_SPEED_MULT,  r: baseR, flash: 0 },
+                    { x: 250, y: 240, vx: -spd * 0.85 * PRISM_BIRD_SPEED_MULT,  vy: spd * 0.95 * PRISM_BIRD_SPEED_MULT,  r: baseR, flash: 0 },
+                    { x: 175, y: 460, vx: spd * 0.5 * PRISM_BIRD_SPEED_MULT,    vy: -spd * 1.2 * PRISM_BIRD_SPEED_MULT,  r: baseR, flash: 0 },
                 ];
             }
             beats = []; beatSpawnTimer = 0;
@@ -1638,18 +1641,18 @@
                     if (dSelf  <= tgt.r + PREC_CHAR_R) { hitSelf  = true; tgt.flash = 1.0; }
                 }
                 if (hitEnemy && canDamage) {
-                    // Flat damage per tap; self-damage (1.5) is slightly less than enemy attack dmg for balance
-                    aiHP -= 2.0 + combo * 0.12;
+                    // Massive damage per strike: slow peck rate means each hit must count
+                    aiHP -= (2.0 + combo * 0.12) * PRISM_BIRD_DMG_MULT;
                     if (now - lastTap < 500) combo = Math.min(combo + 1, 30); else combo = 1;
                     lastTap = now;
                     playPrecisionHitSound(false);
-                    score += 22 + combo * 3;
-                    shakeX = (Math.random()-0.5)*3; shakeY = (Math.random()-0.5)*3;
+                    score += 85 + combo * 12;
+                    shakeX = (Math.random()-0.5)*8; shakeY = (Math.random()-0.5)*8;
                 }
                 if (hitSelf && canDamage) {
-                    playerHP -= 1.5; // intentional self-damage: risk/reward penalty
+                    playerHP -= 6.0; // massive self-damage penalty: timing risk is real
                     playPeckSound(false);
-                    shakeX = (Math.random()-0.5)*6; shakeY = (Math.random()-0.5)*6;
+                    shakeX = (Math.random()-0.5)*10; shakeY = (Math.random()-0.5)*10;
                 }
                 if (!hitEnemy && !hitSelf) {
                     combo = Math.max(0, combo - 1);
