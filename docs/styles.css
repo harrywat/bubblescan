@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: monospace;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Prevent double-tap zoom on the page while keeping accessibility intact */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+canvas {
+    display: block;
+    background: #001100;
+    image-rendering: pixelated;
+    border: 3px solid #ffff00;
+    /* Disable all default browser touch handling on the canvas;
+       our non-passive JS listeners handle everything. */
+    touch-action: none;
+}
