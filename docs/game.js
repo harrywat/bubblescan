@@ -43,6 +43,7 @@
             const silentSrc = audioCtx.createBufferSource();
             silentSrc.buffer = silentBuf;
             silentSrc.connect(audioCtx.destination);
+            silentSrc.onended = () => silentSrc.disconnect();
             silentSrc.start(0);
         }
         if (audioCtx.state === 'suspended') {
