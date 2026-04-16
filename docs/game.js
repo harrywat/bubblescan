@@ -36,6 +36,15 @@
             masterGain = audioCtx.createGain();
             masterGain.gain.value = 0.8;
             masterGain.connect(audioCtx.destination);
+            // iOS/Safari silent-buffer unlock: playing a one-sample silent buffer
+            // within the user gesture synchronously unlocks the audio hardware on
+            // all iOS versions, including older ones that ignore resume() alone.
+            const silentBuf = audioCtx.createBuffer(1, 1, 22050);
+            const silentSrc = audioCtx.createBufferSource();
+            silentSrc.buffer = silentBuf;
+            silentSrc.connect(audioCtx.destination);
+            silentSrc.onended = () => silentSrc.disconnect();
+            silentSrc.start(0);
         }
         if (audioCtx.state === 'suspended') {
             audioCtx.resume().catch(err => console.log('Audio context resume error:', err));
