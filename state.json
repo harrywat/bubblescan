@@ -1,0 +1,15 @@
+{
+  "last_run": "2026-04-17T08:47:54Z",
+  "last_run_id": "24556360908",
+  "monthly_summary_issue": {
+    "title": "[Repo Assist] Monthly Activity 2026-04",
+    "month": "2026-04"
+  },
+  "prs_created": [
+    {"branch": "repo-assist/improve-readme-2026-04", "estimated_number": 20, "title": "Add proper README with game description and play instructions"},
+    {"branch": "repo-assist/eng-ci-syntax-check-2026-04", "estimated_number": 21, "title": "Add CI workflow for JavaScript syntax checking"}
+  ],
+  "stale_branches": ["copilot/fix-taps-per-minute-countdown"],
+  "backlog_cursor": {"issues": 0, "prs": 21},
+  "notes": "PR #20 and #21 created this run (numbers estimated, last known PR was #19). Monthly summary issue created. No open issues exist."
+}
