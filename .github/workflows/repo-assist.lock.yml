@@ -79,8 +79,8 @@ name: "Repo Assist"
     types:
     - created
     - edited
-  schedule:
-  - cron: "0 0 1 * *"
+  # schedule:
+  # - cron: "0 0 1 * *"
   workflow_dispatch:
     inputs:
       aw_context:
