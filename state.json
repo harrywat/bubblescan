@@ -1,15 +1,14 @@
 {
-  "last_run": "2026-04-17T08:47:54Z",
-  "last_run_id": "24556360908",
+  "last_run": "2026-04-29T08:03:27Z",
+  "last_run_id": "25097600686",
   "monthly_summary_issue": {
     "title": "[Repo Assist] Monthly Activity 2026-04",
     "month": "2026-04"
   },
   "prs_created": [
-    {"branch": "repo-assist/improve-readme-2026-04", "estimated_number": 20, "title": "Add proper README with game description and play instructions"},
-    {"branch": "repo-assist/eng-ci-syntax-check-2026-04", "estimated_number": 21, "title": "Add CI workflow for JavaScript syntax checking"}
+    {"branch": "repo-assist/perf-pause-hidden-tab-2026-04", "estimated_number": 23, "title": "Pause game loop when browser tab is hidden"}
   ],
-  "stale_branches": ["copilot/fix-taps-per-minute-countdown"],
-  "backlog_cursor": {"issues": 0, "prs": 21},
-  "notes": "PR #20 and #21 created this run (numbers estimated, last known PR was #19). Monthly summary issue created. No open issues exist."
+  "backlog_cursor": {"issues": 0, "prs": 23},
+  "checked_off_actions": ["PR #20", "PR #21"],
+  "notes": "PR #23 created for performance improvement (visibilitychange pause). PRs #20 and #21 were merged (checked off in previous monthly summary). New monthly summary created for April 2026."
 }
