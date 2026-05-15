@@ -61,11 +61,13 @@ safe-outputs:
     allowed-repos: [harrywat/bubblescan, harrywat/network-things]
     max: 1
     protected-files: fallback-to-issue
+    token: ${{ secrets.GITHUB_TOKEN || github.token }}
   create-issue:
     title-prefix: "[Token Test] "
     labels: [automation]
     allowed-repos: [harrywat/bubblescan, harrywat/network-things]
     max: 1
+    token: ${{ secrets.GITHUB_TOKEN || github.token }}
   noop:
     max: 1
 ---
