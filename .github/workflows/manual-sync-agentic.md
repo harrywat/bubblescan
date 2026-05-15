@@ -14,7 +14,6 @@ on:
       base_branch:
         description: Base branch for the PR.
         required: false
-        default: master
         type: string
 
 timeout-minutes: 45
@@ -67,7 +66,8 @@ You are running a token permission test workflow.
 Interpretation rules:
 
 1. If target_repo is empty, use `${{ github.repository }}`.
-2. If base_branch is empty, use `master`.
+2. If base_branch is empty, use `${{ github.event.repository.default_branch }}`.
+3. If the workflow is run from a non-default branch during testing, set `base_branch` explicitly to that branch name.
 
 ## Objective
 
@@ -76,14 +76,20 @@ Test whether the workflow runtime can perform a complete change-and-PR flow unde
 Required work:
 
 1. Confirm `docs/source.txt` exists in the current checkout.
-2. Update `docs/output.txt` so the first line is exactly:
-   `last_updated: YYYY-MM-DD HH:MM:SS UTC`
-   using the current UTC time.
-3. Include a blank line after that line, then `Source snapshot:` and the full contents of `docs/source.txt`.
-4. Create a new branch named:
-   `automation/manual-sync-agentic-${{ github.run_id }}`
-5. Commit only `docs/output.txt`.
-6. Attempt to create a draft PR against `base_branch`.
+2. Resolve `base_branch` using the interpretation rules.
+3. Ensure the local checkout is moved to the resolved `base_branch` tip before any file edits.
+4. Create a new work branch named `automation/manual-sync-agentic-${{ github.run_id }}` from that resolved base commit.
+5. Update `docs/output.txt` so the first line is exactly:
+  `last_updated: YYYY-MM-DD HH:MM:SS UTC`
+  using the current UTC time.
+6. Include a blank line after that line, then `Source snapshot:` and the full contents of `docs/source.txt`.
+7. Commit only `docs/output.txt`.
+8. Attempt to create a draft PR against `base_branch`.
+
+Branch safety requirements:
+
+1. Never create the work branch from the triggering branch unless it is exactly the resolved `base_branch`.
+2. Never include commits or file diffs from unrelated branches in the PR bundle.
 
 PR requirements:
 
