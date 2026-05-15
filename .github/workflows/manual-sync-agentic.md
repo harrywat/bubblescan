@@ -50,6 +50,7 @@ tools:
   bash: true
 
 safe-outputs:
+  github-token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
   messages:
     run-started: "{workflow_name} started token permission test: {event_type}"
     run-success: "{workflow_name} completed token permission test successfully."
