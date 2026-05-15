@@ -1,4 +1,6 @@
-last_updated: not set
+last_updated: 2026-05-15 09:34:40 UTC
 
 Source snapshot:
-(not generated yet)
+Sample source content for the manual agentic workflow.
+
+This file is intentionally simple so the workflow can read it and propagate it into output.txt.
