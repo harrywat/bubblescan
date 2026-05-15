@@ -1,15 +1,29 @@
 ---
 description: |
   Manual agentic workflow for GitHub token permission testing.
-  Reads docs/source.txt, updates docs/output.txt with a UTC timestamp,
-  and attempts to open a pull request.
+  Pulls a source file from one repository, updates a target file,
+  and attempts to open a pull request in the target repository.
 
 on:
   workflow_dispatch:
     inputs:
+      source_repo:
+        description: Optional owner/repo source. Leave empty to read from target_repo.
+        required: false
+        type: string
+      source_path:
+        description: File path to read from source_repo.
+        required: false
+        default: source.txt
+        type: string
       target_repo:
         description: Optional owner/repo target. Leave empty to use current repository.
         required: false
+        type: string
+      target_path:
+        description: File path to update in target_repo.
+        required: false
+        default: source.txt
         type: string
       base_branch:
         description: Base branch for the PR.
@@ -60,31 +74,45 @@ You are running a token permission test workflow.
 
 ## Inputs
 
+- source_repo: `${{ github.event.inputs.source_repo }}`
+- source_path: `${{ github.event.inputs.source_path }}`
 - target_repo: `${{ github.event.inputs.target_repo }}`
+- target_path: `${{ github.event.inputs.target_path }}`
 - base_branch: `${{ github.event.inputs.base_branch }}`
 
 Interpretation rules:
 
 1. If target_repo is empty, use `${{ github.repository }}`.
-2. If base_branch is empty, use `${{ github.event.repository.default_branch }}`.
-3. If the workflow is run from a non-default branch during testing, set `base_branch` explicitly to that branch name.
+2. If source_repo is empty, use resolved target_repo.
+3. If source_path is empty, use `source.txt`.
+4. If target_path is empty, use `source.txt`.
+5. If base_branch is empty, use `${{ github.event.repository.default_branch }}`.
+6. If the workflow is run from a non-default branch during testing, set `base_branch` explicitly to that branch name.
 
 ## Objective
 
-Test whether the workflow runtime can perform a complete change-and-PR flow under current token permissions.
+Test whether the workflow runtime can perform a complete cross-repository read and PR flow under current token permissions.
+
+## Preflight checks (must run before any edits)
+
+1. Verify read access to source_repo by fetching source_path.
+2. Verify target_repo exists and base_branch is resolvable in target_repo.
+3. Verify write capability for target_repo pull-request flow by confirming branch and PR operations are permitted.
+4. If any preflight check fails, stop mutation work and follow the failure handling section with exact error text.
 
 Required work:
 
-1. Confirm `docs/source.txt` exists in the current checkout.
-2. Resolve `base_branch` using the interpretation rules.
-3. Ensure the local checkout is moved to the resolved `base_branch` tip before any file edits.
-4. Create a new work branch named `automation/manual-sync-agentic-${{ github.run_id }}` from that resolved base commit.
-5. Update `docs/output.txt` so the first line is exactly:
+1. Resolve source_repo, source_path, target_repo, target_path, and base_branch using the interpretation rules.
+2. Run all preflight checks and only continue if they pass.
+3. Read the full contents of source_path from source_repo at the resolved base_branch. If that branch does not exist in source_repo, fall back to source_repo default branch.
+4. Ensure the local checkout is moved to the resolved base_branch tip before any file edits.
+5. Create a new work branch named `automation/manual-sync-agentic-${{ github.run_id }}` from that resolved base commit.
+6. Update target_path so the first line is exactly:
   `last_updated: YYYY-MM-DD HH:MM:SS UTC`
   using the current UTC time.
-6. Include a blank line after that line, then `Source snapshot:` and the full contents of `docs/source.txt`.
-7. Commit only `docs/output.txt`.
-8. Attempt to create a draft PR against `base_branch`.
+7. Include a blank line after that line, then `Source snapshot:` and the full source file contents from source_repo/source_path.
+8. Commit only target_path.
+9. Attempt to create a draft PR against target_repo and base_branch.
 
 Branch safety requirements:
 
@@ -93,10 +121,12 @@ Branch safety requirements:
 
 PR requirements:
 
-- Title: `Manual sync update for docs/output.txt`
+- Title: `Manual sync update for ${target_path}`
 - Body must include:
   - A line stating this is an automated token permission test.
+  - The resolved source repo and source path.
   - The resolved target repo.
+  - The resolved target path.
   - The resolved base branch.
 
 ## Failure handling for permission tests

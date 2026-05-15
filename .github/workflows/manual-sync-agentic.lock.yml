@@ -1,4 +1,4 @@
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"dc089c1c476ea826074f36eb48f42458b3f66e4183b114f18ec7fcd5fb668c61","compiler_version":"v0.72.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"cf51a42fa61cbdb9bf88b23e9336b678ec16ff427b77406186a86f2be461fc24","compiler_version":"v0.72.1","strict":true,"agent_id":"copilot"}
 # gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_CI_TRIGGER_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/checkout","sha":"de0fac2e4500dabe0009e67214ff5f5447ce83dd","version":"v6.0.2"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"bc56a0cad2f450c562810785ef38649c04db812a","version":"v0.72.1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.25.41"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.25.41"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.25.41"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.6","digest":"sha256:2bb8eef86006a4c5963c55616a9c51c32f27bfdecb023b8aa6f91f6718d9171c","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.6@sha256:2bb8eef86006a4c5963c55616a9c51c32f27bfdecb023b8aa6f91f6718d9171c"},{"image":"ghcr.io/github/github-mcp-server:v1.0.3","digest":"sha256:2ac27ef03461ef2b877031b838a7d1fd7f12b12d4ace7796d8cad91446d55959","pinned_image":"ghcr.io/github/github-mcp-server:v1.0.3@sha256:2ac27ef03461ef2b877031b838a7d1fd7f12b12d4ace7796d8cad91446d55959"},{"image":"node:lts-alpine","digest":"sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f","pinned_image":"node:lts-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f"}]}
 #    ___                   _   _      
 #   / _ \                 | | (_)     
@@ -23,8 +23,8 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 # Manual agentic workflow for GitHub token permission testing.
-# Reads docs/source.txt, updates docs/output.txt with a UTC timestamp,
-# and attempts to open a pull request.
+# Pulls a source file from one repository, updates a target file,
+# and attempts to open a pull request in the target repository.
 #
 # Secrets used:
 #   - COPILOT_GITHUB_TOKEN
@@ -60,6 +60,20 @@ name: "Manual Sync Agentic"
         type: string
       base_branch:
         description: Base branch for the PR.
+        required: false
+        type: string
+      source_path:
+        default: source.txt
+        description: File path to read from source_repo.
+        required: false
+        type: string
+      source_repo:
+        description: Optional owner/repo source. Leave empty to read from target_repo.
+        required: false
+        type: string
+      target_path:
+        default: source.txt
+        description: File path to update in target_repo.
         required: false
         type: string
       target_repo:
@@ -182,6 +196,9 @@ jobs:
           GH_AW_GITHUB_EVENT_COMMENT_ID: ${{ github.event.comment.id }}
           GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           GH_AW_GITHUB_EVENT_INPUTS_BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+          GH_AW_GITHUB_EVENT_INPUTS_SOURCE_PATH: ${{ github.event.inputs.source_path }}
+          GH_AW_GITHUB_EVENT_INPUTS_SOURCE_REPO: ${{ github.event.inputs.source_repo }}
+          GH_AW_GITHUB_EVENT_INPUTS_TARGET_PATH: ${{ github.event.inputs.target_path }}
           GH_AW_GITHUB_EVENT_INPUTS_TARGET_REPO: ${{ github.event.inputs.target_repo }}
           GH_AW_GITHUB_EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
           GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
@@ -193,23 +210,23 @@ jobs:
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_e6429b2395e58125_EOF'
+          cat << 'GH_AW_PROMPT_d80c8c720a0993ec_EOF'
           <system>
-          GH_AW_PROMPT_e6429b2395e58125_EOF
+          GH_AW_PROMPT_d80c8c720a0993ec_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_e6429b2395e58125_EOF'
+          cat << 'GH_AW_PROMPT_d80c8c720a0993ec_EOF'
           <safe-output-tools>
           Tools: create_issue, create_pull_request, missing_tool, missing_data, noop
-          GH_AW_PROMPT_e6429b2395e58125_EOF
+          GH_AW_PROMPT_d80c8c720a0993ec_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_create_pull_request.md"
-          cat << 'GH_AW_PROMPT_e6429b2395e58125_EOF'
+          cat << 'GH_AW_PROMPT_d80c8c720a0993ec_EOF'
           </safe-output-tools>
-          GH_AW_PROMPT_e6429b2395e58125_EOF
+          GH_AW_PROMPT_d80c8c720a0993ec_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_e6429b2395e58125_EOF'
+          cat << 'GH_AW_PROMPT_d80c8c720a0993ec_EOF'
           <github-context>
           The following GitHub context information is available for this workflow:
           {{#if __GH_AW_GITHUB_ACTOR__ }}
@@ -241,12 +258,12 @@ jobs:
             - **Note**: If a branch you need is not in the list above and is not listed as an additional fetched ref, it has NOT been checked out. For private repositories you cannot fetch it without proper authentication. If the branch is required and not available, exit with an error and ask the user to add it to the `fetch:` option of the `checkout:` configuration (e.g., `fetch: ["refs/pulls/open/*"]` for all open PR refs, or `fetch: ["main", "feature/my-branch"]` for specific branches).
           </github-context>
           
-          GH_AW_PROMPT_e6429b2395e58125_EOF
+          GH_AW_PROMPT_d80c8c720a0993ec_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/github_mcp_tools_with_safeoutputs_prompt.md"
-          cat << 'GH_AW_PROMPT_e6429b2395e58125_EOF'
+          cat << 'GH_AW_PROMPT_d80c8c720a0993ec_EOF'
           </system>
           {{#runtime-import .github/workflows/manual-sync-agentic.md}}
-          GH_AW_PROMPT_e6429b2395e58125_EOF
+          GH_AW_PROMPT_d80c8c720a0993ec_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -254,6 +271,9 @@ jobs:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_ENGINE_ID: "copilot"
           GH_AW_GITHUB_EVENT_INPUTS_BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+          GH_AW_GITHUB_EVENT_INPUTS_SOURCE_PATH: ${{ github.event.inputs.source_path }}
+          GH_AW_GITHUB_EVENT_INPUTS_SOURCE_REPO: ${{ github.event.inputs.source_repo }}
+          GH_AW_GITHUB_EVENT_INPUTS_TARGET_PATH: ${{ github.event.inputs.target_path }}
           GH_AW_GITHUB_EVENT_INPUTS_TARGET_REPO: ${{ github.event.inputs.target_repo }}
           GH_AW_GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
@@ -272,6 +292,9 @@ jobs:
           GH_AW_GITHUB_EVENT_COMMENT_ID: ${{ github.event.comment.id }}
           GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           GH_AW_GITHUB_EVENT_INPUTS_BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+          GH_AW_GITHUB_EVENT_INPUTS_SOURCE_PATH: ${{ github.event.inputs.source_path }}
+          GH_AW_GITHUB_EVENT_INPUTS_SOURCE_REPO: ${{ github.event.inputs.source_repo }}
+          GH_AW_GITHUB_EVENT_INPUTS_TARGET_PATH: ${{ github.event.inputs.target_path }}
           GH_AW_GITHUB_EVENT_INPUTS_TARGET_REPO: ${{ github.event.inputs.target_repo }}
           GH_AW_GITHUB_EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
           GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
@@ -295,6 +318,9 @@ jobs:
                 GH_AW_GITHUB_EVENT_COMMENT_ID: process.env.GH_AW_GITHUB_EVENT_COMMENT_ID,
                 GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: process.env.GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER,
                 GH_AW_GITHUB_EVENT_INPUTS_BASE_BRANCH: process.env.GH_AW_GITHUB_EVENT_INPUTS_BASE_BRANCH,
+                GH_AW_GITHUB_EVENT_INPUTS_SOURCE_PATH: process.env.GH_AW_GITHUB_EVENT_INPUTS_SOURCE_PATH,
+                GH_AW_GITHUB_EVENT_INPUTS_SOURCE_REPO: process.env.GH_AW_GITHUB_EVENT_INPUTS_SOURCE_REPO,
+                GH_AW_GITHUB_EVENT_INPUTS_TARGET_PATH: process.env.GH_AW_GITHUB_EVENT_INPUTS_TARGET_PATH,
                 GH_AW_GITHUB_EVENT_INPUTS_TARGET_REPO: process.env.GH_AW_GITHUB_EVENT_INPUTS_TARGET_REPO,
                 GH_AW_GITHUB_EVENT_ISSUE_NUMBER: process.env.GH_AW_GITHUB_EVENT_ISSUE_NUMBER,
                 GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: process.env.GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER,
@@ -455,9 +481,9 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/gh-aw/safeoutputs"
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
-          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_58a475bfceb12170_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_27e0102bd15e4965_EOF'
           {"create_issue":{"labels":["automation"],"max":1,"title_prefix":"[Token Test] "},"create_pull_request":{"draft":true,"labels":["automation"],"max":1,"max_patch_files":100,"max_patch_size":1024,"protect_top_level_dot_folders":true,"protected_files":["package.json","bun.lockb","bunfig.toml","deno.json","deno.jsonc","deno.lock","global.json","NuGet.Config","Directory.Packages.props","mix.exs","mix.lock","go.mod","go.sum","stack.yaml","stack.yaml.lock","pom.xml","build.gradle","build.gradle.kts","settings.gradle","settings.gradle.kts","gradle.properties","package-lock.json","yarn.lock","pnpm-lock.yaml","npm-shrinkwrap.json","requirements.txt","Pipfile","Pipfile.lock","pyproject.toml","setup.py","setup.cfg","Gemfile","Gemfile.lock","uv.lock","CODEOWNERS","DESIGN.md","README.md","CONTRIBUTING.md","CHANGELOG.md","SECURITY.md","CODE_OF_CONDUCT.md","AGENTS.md","CLAUDE.md","GEMINI.md"],"protected_files_policy":"fallback-to-issue","title_prefix":"[Token Test] "},"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"report_incomplete":{}}
-          GH_AW_SAFE_OUTPUTS_CONFIG_58a475bfceb12170_EOF
+          GH_AW_SAFE_OUTPUTS_CONFIG_27e0102bd15e4965_EOF
       - name: Generate Safe Outputs Tools
         env:
           GH_AW_TOOLS_META_JSON: |
@@ -697,7 +723,7 @@ jobs:
           
           mkdir -p /home/runner/.copilot
           GH_AW_NODE=$(which node 2>/dev/null || command -v node 2>/dev/null || echo node)
-          cat << GH_AW_MCP_CONFIG_fe38550e3c3ff31a_EOF | "$GH_AW_NODE" "${RUNNER_TEMP}/gh-aw/actions/start_mcp_gateway.cjs"
+          cat << GH_AW_MCP_CONFIG_4d891ea6377ff75d_EOF | "$GH_AW_NODE" "${RUNNER_TEMP}/gh-aw/actions/start_mcp_gateway.cjs"
           {
             "mcpServers": {
               "github": {
@@ -741,7 +767,7 @@ jobs:
               "payloadDir": "${MCP_GATEWAY_PAYLOAD_DIR}"
             }
           }
-          GH_AW_MCP_CONFIG_fe38550e3c3ff31a_EOF
+          GH_AW_MCP_CONFIG_4d891ea6377ff75d_EOF
       - name: Mount MCP servers as CLIs
         id: mount-mcp-clis
         continue-on-error: true
@@ -1199,7 +1225,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           WORKFLOW_NAME: "Manual Sync Agentic"
-          WORKFLOW_DESCRIPTION: "Manual agentic workflow for GitHub token permission testing.\nReads docs/source.txt, updates docs/output.txt with a UTC timestamp,\nand attempts to open a pull request."
+          WORKFLOW_DESCRIPTION: "Manual agentic workflow for GitHub token permission testing.\nPulls a source file from one repository, updates a target file,\nand attempts to open a pull request in the target repository."
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
           script: |
