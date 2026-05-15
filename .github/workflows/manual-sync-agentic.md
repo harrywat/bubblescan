@@ -95,6 +95,14 @@ Interpretation rules:
 
 Test whether the workflow runtime can perform a complete cross-repository read and PR flow under current token permissions.
 
+## Runtime token bootstrap
+
+Before running preflight checks, ensure the runtime has a `GITHUB_TOKEN` environment variable set for multi-repo checkout/push operations.
+
+1. If `GITHUB_TOKEN` is unset but `GH_TOKEN` is available, set `GITHUB_TOKEN` to `GH_TOKEN` for the current process.
+2. If neither token is available, stop and create an issue explaining that `GITHUB_TOKEN` is required for dynamic multi-repo checkout.
+3. Include the exact token-missing error text in the issue body.
+
 ## Preflight checks (must run before any edits)
 
 1. Verify read access to source_repo by fetching source_path.
