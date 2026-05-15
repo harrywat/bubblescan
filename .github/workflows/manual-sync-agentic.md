@@ -58,11 +58,13 @@ safe-outputs:
     title-prefix: "[Token Test] "
     labels: [automation]
     draft: true
+    allowed-repos: [harrywat/bubblescan, harrywat/network-things]
     max: 1
     protected-files: fallback-to-issue
   create-issue:
     title-prefix: "[Token Test] "
     labels: [automation]
+    allowed-repos: [harrywat/bubblescan, harrywat/network-things]
     max: 1
   noop:
     max: 1
