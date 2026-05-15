@@ -1,0 +1,6 @@
+last_updated: 2026-05-15 10:39:36 UTC
+
+Source snapshot:
+Sample source content for the manual agentic workflow.
+
+This file is intentionally simple so the workflow can read it and propagate it into output.txt.
