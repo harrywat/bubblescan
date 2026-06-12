@@ -50,6 +50,7 @@ tools:
   bash: true
 
 safe-outputs:
+  github-token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
   messages:
     run-started: "{workflow_name} started token permission test: {event_type}"
     run-success: "{workflow_name} completed token permission test successfully."
@@ -61,11 +62,13 @@ safe-outputs:
     allowed-repos: [harrywat/bubblescan, harrywat/network-things]
     max: 1
     protected-files: fallback-to-issue
+    token: ${{ secrets.GITHUB_TOKEN || github.token }}
   create-issue:
     title-prefix: "[Token Test] "
     labels: [automation]
     allowed-repos: [harrywat/bubblescan, harrywat/network-things]
     max: 1
+    token: ${{ secrets.GITHUB_TOKEN || github.token }}
   noop:
     max: 1
 ---
@@ -94,6 +97,14 @@ Interpretation rules:
 ## Objective
 
 Test whether the workflow runtime can perform a complete cross-repository read and PR flow under current token permissions.
+
+## Runtime token bootstrap
+
+Before running preflight checks, ensure the runtime has a `GITHUB_TOKEN` environment variable set for multi-repo checkout/push operations.
+
+1. If `GITHUB_TOKEN` is unset but `GH_TOKEN` is available, set `GITHUB_TOKEN` to `GH_TOKEN` for the current process.
+2. If neither token is available, stop and create an issue explaining that `GITHUB_TOKEN` is required for dynamic multi-repo checkout.
+3. Include the exact token-missing error text in the issue body.
 
 ## Preflight checks (must run before any edits)
 
