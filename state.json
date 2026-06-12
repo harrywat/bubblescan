@@ -1,21 +1,21 @@
 {
-  "last_run": "2026-06-12T07:23:43Z",
-  "last_run_id": "27397064421",
+  "last_run": "2026-06-12T07:53:01Z",
+  "last_run_id": "27402386699",
   "monthly_summary_issue": {
     "number": 43,
     "title": "[repo-assist] [Repo Assist] Monthly Activity 2026-06",
     "month": "2026-06"
   },
   "prs_created": [
-    {"branch": "repo-assist/eng-ci-node22-20260612", "temporary_id": "#aw_cipr2", "title": "CI: upgrade Node 20 -> 22 LTS and add HTML asset-reference validation", "tasks": "9+4", "status": "open"},
+    {"branch": "repo-assist/testing-ci-node22-20260612", "temporary_id": "#aw_cipr3", "title": "CI: upgrade Node 20 → 22 LTS and add HTML asset-reference validation", "tasks": "9+4+10", "status": "open"},
     {"branch": "repo-assist/perf-pause-hidden-tab-2026-04", "pr_number": 24, "title": "Pause game loop when browser tab is hidden", "status": "open"}
   ],
-  "backlog_cursor": {"issues": 43, "prs": 0},
+  "backlog_cursor": {"issues": 44, "prs": 0},
   "checked_off_actions": ["PR #20", "PR #21"],
   "comments_made": {
     "38": "2026-06-12T07:23:43Z",
     "39": "2026-06-12T07:23:43Z",
     "42": "2026-06-12T07:23:43Z"
   },
-  "notes": "Run 2026-06-12 07:23: Created CI PR (branch repo-assist/eng-ci-node22-20260612, temporary_id #aw_cipr2). Commented on #38, #39 (token test artifacts, suggest close). Commented on #42 (accidentally created issue). Labelled #38/#39 off-topic, #40 needs-triage. Monthly activity #43 updated. PRs to watch: #24 (tab pause, open since Apr 2026), new CI PR. Issues to close: #25 (Apr summary), #37 (token test PR), #38, #39, #40, #42."
+  "notes": "Run 2026-06-12 07:53: Created CI PR (branch repo-assist/testing-ci-node22-20260612, temp_id #aw_cipr3) — Node 20→22 + scripts/check-assets.js. Labelled #38/#39/#42/#44 off-topic, #40 needs-investigation. Monthly summary #43 updated (full replace). Old accidental issues: #42 (05:55 run), #44 (07:33 run). Issues to close: #25, #37 (PR), #38, #39, #40, #42, #44. PRs to review: new CI PR, #24 (tab pause, Apr 2026)."
 }
