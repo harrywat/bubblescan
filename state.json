@@ -1,21 +1,30 @@
 {
-  "last_run": "2026-06-12T07:53:01Z",
-  "last_run_id": "27402386699",
+  "last_run": "2026-06-12T08:19:31Z",
+  "last_run_id": "27403668566",
   "monthly_summary_issue": {
     "number": 43,
     "title": "[repo-assist] [Repo Assist] Monthly Activity 2026-06",
     "month": "2026-06"
   },
   "prs_created": [
-    {"branch": "repo-assist/testing-ci-node22-20260612", "temporary_id": "#aw_cipr3", "title": "CI: upgrade Node 20 → 22 LTS and add HTML asset-reference validation", "tasks": "9+4+10", "status": "open"},
+    {"branch": "repo-assist/improve-check-assets-script-20260612", "temporary_id": "#aw_check_assets", "title": "Add scripts/check-assets.js — HTML asset-reference validation utility", "tasks": "9", "status": "open"},
     {"branch": "repo-assist/perf-pause-hidden-tab-2026-04", "pr_number": 24, "title": "Pause game loop when browser tab is hidden", "status": "open"}
   ],
-  "backlog_cursor": {"issues": 44, "prs": 0},
+  "backlog_cursor": {"issues": 45, "prs": 0},
   "checked_off_actions": ["PR #20", "PR #21"],
+  "labels_applied": {
+    "38": ["off topic"],
+    "39": ["off topic"],
+    "40": ["needs investigation"],
+    "42": ["off topic", "duplicate"],
+    "43": ["documentation"],
+    "44": ["off topic", "duplicate"],
+    "45": ["off topic"]
+  },
   "comments_made": {
     "38": "2026-06-12T07:23:43Z",
     "39": "2026-06-12T07:23:43Z",
     "42": "2026-06-12T07:23:43Z"
   },
-  "notes": "Run 2026-06-12 07:53: Created CI PR (branch repo-assist/testing-ci-node22-20260612, temp_id #aw_cipr3) — Node 20→22 + scripts/check-assets.js. Labelled #38/#39/#42/#44 off-topic, #40 needs-investigation. Monthly summary #43 updated (full replace). Old accidental issues: #42 (05:55 run), #44 (07:33 run). Issues to close: #25, #37 (PR), #38, #39, #40, #42, #44. PRs to review: new CI PR, #24 (tab pause, Apr 2026)."
+  "notes": "Run 2026-06-12 08:19: Labelled issues #38,#39,#40,#42,#43,#44,#45. Created check-assets PR (temp #aw_check_assets). Updated monthly summary #43 (full replace). Previous CI PR blocked (workflows perm) — issue #45 has manual instructions for maintainer. Issues to close: #25, #37 (PR), #38, #39, #40, #42, #44, #45. PRs to review: check-assets PR, #24 (tab pause)."
 }
