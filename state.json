@@ -1,16 +1,21 @@
 {
-  "last_run": "2026-06-12T05:44:42Z",
+  "last_run": "2026-06-12T07:23:43Z",
   "last_run_id": "27397064421",
   "monthly_summary_issue": {
-    "title": "[Repo Assist] Monthly Activity 2026-06",
+    "number": 43,
+    "title": "[repo-assist] [Repo Assist] Monthly Activity 2026-06",
     "month": "2026-06"
   },
   "prs_created": [
-    {"branch": "repo-assist/eng-ci-improvements-20260612", "title": "CI: upgrade to Node 22 LTS and add HTML asset-reference validation", "tasks": "4+9"},
+    {"branch": "repo-assist/eng-ci-node22-20260612", "temporary_id": "#aw_cipr2", "title": "CI: upgrade Node 20 -> 22 LTS and add HTML asset-reference validation", "tasks": "9+4", "status": "open"},
     {"branch": "repo-assist/perf-pause-hidden-tab-2026-04", "pr_number": 24, "title": "Pause game loop when browser tab is hidden", "status": "open"}
   ],
-  "backlog_cursor": {"issues": 40, "prs": 0},
+  "backlog_cursor": {"issues": 43, "prs": 0},
   "checked_off_actions": ["PR #20", "PR #21"],
-  "comments_made": {},
-  "notes": "Run 2026-06-12: Created CI improvement PR (Node 22 + asset validation). Closed April monthly summary (#25) and created June 2026 summary. Task 3 fell back to Task 2 (no bug-labelled issues); all open issues (#38, #39, #40) are automated system reports. PRs to watch: #24 (tab pause, open since Apr 2026), new CI PR. Issues to close: #37, #38, #39, #40."
+  "comments_made": {
+    "38": "2026-06-12T07:23:43Z",
+    "39": "2026-06-12T07:23:43Z",
+    "42": "2026-06-12T07:23:43Z"
+  },
+  "notes": "Run 2026-06-12 07:23: Created CI PR (branch repo-assist/eng-ci-node22-20260612, temporary_id #aw_cipr2). Commented on #38, #39 (token test artifacts, suggest close). Commented on #42 (accidentally created issue). Labelled #38/#39 off-topic, #40 needs-triage. Monthly activity #43 updated. PRs to watch: #24 (tab pause, open since Apr 2026), new CI PR. Issues to close: #25 (Apr summary), #37 (token test PR), #38, #39, #40, #42."
 }
