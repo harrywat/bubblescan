@@ -1750,14 +1750,29 @@
     canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
     // ===== GAME LOOP =====
+    let rafId = null;
+
     function loop() {
         frame++;
         update();
         draw();
-        requestAnimationFrame(loop);
+        rafId = requestAnimationFrame(loop);
     }
 
-    loop();
+    function startLoop() {
+        if (!rafId) rafId = requestAnimationFrame(loop);
+    }
+
+    function stopLoop() {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }
+
+    // Pause rendering when the tab is hidden to save CPU/battery.
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { stopLoop(); } else { startLoop(); }
+    });
+
+    startLoop();
     console.log('✅ BIRD GAME 3 PECK GAUNTLET READY');
 
 })();
