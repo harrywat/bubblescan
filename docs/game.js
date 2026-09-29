@@ -246,6 +246,7 @@
 
     let gameState = 'menu';
     let currentLevel = 0;
+    let loopNumber = 1;
     let playerMeter = 0, aiMeter = 0;
     let playerHP = 0, playerMaxHP = 35;
     let aiHP = 0, aiMaxHP = 0;
@@ -741,7 +742,7 @@
         ctx.font = '14px monospace'; ctx.fillStyle = '#00ff88';
         ctx.fillText('YOU ARE PIGEON. DEFEAT ALL BIRDS.', W/2, 130);
         ctx.fillStyle = '#ffaa00'; ctx.font = '12px monospace';
-        ctx.fillText(`9 ROUNDS`, W/2, 150);
+        ctx.fillText(`LOOP ${loopNumber} — 9 ROUNDS`, W/2, 150);
         ctx.fillStyle = '#ffff00'; ctx.font = 'bold 16px monospace';
         ctx.fillText(`ROUND ${currentLevel+1}: ${currentBird().name}`, W/2, 185);
         ctx.fillStyle = currentBird().color;
@@ -976,7 +977,7 @@
         ctx.fillStyle = `rgba(255,255,120,${titleGlow})`;
         ctx.fillRect(0, 70, W, 70);
         ctx.fillStyle = '#ffff00'; ctx.font = 'bold 30px monospace'; ctx.textAlign = 'center';
-        ctx.fillText('🏆 GAUNTLET COMPLETE 🏆', W / 2, 115);
+        ctx.fillText(`🏆 LOOP ${loopNumber} COMPLETE 🏆`, W / 2, 115);
         ctx.fillStyle = '#00ff44'; ctx.font = 'bold 16px monospace';
         ctx.fillText('PIGEON ASCENDED TO PATCH NOTES', W / 2, 148);
 
@@ -1014,7 +1015,7 @@
         if (canRestart) {
             ctx.fillStyle = frame % 30 < 15 ? '#00ff88' : '#004422';
             ctx.font = 'bold 16px monospace';
-            ctx.fillText('TAP TO RESTART', W / 2, 596);
+            ctx.fillText(`TAP FOR LOOP ${loopNumber + 1} (HARDER)`, W / 2, 596);
         } else {
             ctx.fillStyle = '#888';
             ctx.font = 'bold 12px monospace';
@@ -1352,7 +1353,7 @@
         const b = currentBird();
         updateFakeHud();
 
-        aiMeter += b.speed;
+        aiMeter += b.speed * (1 + (loopNumber - 1) * 0.05);
         if (aiMeter >= 10) {
             aiMeter = 0;
             playerHP -= b.dmg;
@@ -1453,7 +1454,7 @@
             playerHP = playerMaxHP;
             totalTaps = 0; totalFightMs = 0;
         }
-        aiHP = b.hp; aiMaxHP = b.hp;
+        aiHP = b.hp * (1 + (loopNumber - 1) * 0.1); aiMaxHP = aiHP;
         combo = 0; taps = 0; score = 0; peckAnim = 0; flashAnim = 0;
         hudGlitch = 0; nerfAlertTimer = 0;
         roundStartFrame = frame;
@@ -1556,6 +1557,7 @@
 
         if (gameState === 'lose') {
             currentLevel = 0;
+            loopNumber = 1;
             totalScore = 0;
             playerHP = playerMaxHP;
             gameState = 'menu';
@@ -1568,6 +1570,7 @@
                 return;
             }
             currentLevel = 0;
+            loopNumber++;
             totalScore = 0;
             gameState = 'menu';
             menuStartFrame = frame;

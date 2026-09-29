@@ -25,7 +25,7 @@ Tap or click to fight each bird. Each opponent uses a different mechanic:
 | **Rhythm Attack** | Catch the beat as it crosses the hit zone |
 | **Crossfire** | Time your shot across multiple crosshairs — risk/reward |
 
-Defeat all 9 birds (Seagull → Flamingo → Penguin → Owl → Eagle → Hummingbird → Shoebill → Dodo → Prism Bird) to win the gauntlet.
+Defeat all 9 birds (Seagull → Flamingo → Penguin → Owl → Eagle → Hummingbird → Shoebill → Dodo → Prism Bird) to complete a loop. Tap after the victory screen to play the gauntlet again: each loop gives opponents 10% more health and makes them attack 5% faster. Losing restarts at loop 1.
 
 ## Project Structure
 
